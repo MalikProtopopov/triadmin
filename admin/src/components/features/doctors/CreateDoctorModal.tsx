@@ -49,8 +49,8 @@ const schema = z.object({
   public_email: z.string().email("Некорректный email").optional().or(z.literal("")),
   public_phone: z.string().optional(),
   specialization_ids: z.array(z.string()).optional(),
-  status: z.enum(["approved", "pending_review"]).default("approved"),
-  send_invite: z.boolean().default(true),
+  status: z.enum(["approved", "pending_review"]),
+  send_invite: z.boolean(),
 });
 
 type FormData = z.infer<typeof schema>;
