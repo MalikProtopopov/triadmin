@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+// NOTE: GET /api/v1/specializations does not exist on backend yet.
+// specialization_ids field is omitted until the endpoint is implemented.
 import { toast } from "sonner";
 import { UserPlus, Loader2, Copy, ChevronDown, ChevronUp } from "lucide-react";
 import api from "@/lib/api";
@@ -48,7 +50,6 @@ const schema = z.object({
   bio: z.string().optional(),
   public_email: z.string().email("Некорректный email").optional().or(z.literal("")),
   public_phone: z.string().optional(),
-  specialization_ids: z.array(z.string()).optional(),
   status: z.enum(["approved", "pending_review"]),
   send_invite: z.boolean(),
 });
@@ -63,11 +64,6 @@ interface CreateDoctorResponse {
   last_name: string;
   status: string;
   temp_password: string | null;
-}
-
-interface Specialization {
-  id: string;
-  name: string;
 }
 
 interface Props {
@@ -96,24 +92,16 @@ export function CreateDoctorModal({ onCreated }: Props) {
     defaultValues: {
       status: "approved",
       send_invite: true,
-      specialization_ids: [],
     },
   });
 
   const sendInvite = watch("send_invite");
-  const selectedSpecs = watch("specialization_ids") || [];
   const selectedCity = watch("city_id");
   const selectedStatus = watch("status");
 
   const { data: citiesData } = useQuery<{ data: City[] }>({
     queryKey: ["cities"],
     queryFn: () => api.get("/cities").then((r) => r.data),
-    enabled: open,
-  });
-
-  const { data: specsData } = useQuery<{ data: Specialization[] }>({
-    queryKey: ["specializations"],
-    queryFn: () => api.get("/specializations").then((r) => r.data),
     enabled: open,
   });
 
@@ -128,11 +116,6 @@ export function CreateDoctorModal({ onCreated }: Props) {
       if (!payload.bio) delete payload.bio;
       if (!payload.public_email) delete payload.public_email;
       if (!payload.public_phone) delete payload.public_phone;
-      if (
-        !payload.specialization_ids ||
-        (payload.specialization_ids as string[]).length === 0
-      )
-        delete payload.specialization_ids;
       return api.post<CreateDoctorResponse>("/admin/doctors", payload);
     },
     onSuccess: (response) => {
@@ -187,14 +170,6 @@ export function CreateDoctorModal({ onCreated }: Props) {
     reset();
     setShowOptional(false);
     if (profileId) onCreated(profileId);
-  }
-
-  function toggleSpec(id: string) {
-    const current = selectedSpecs;
-    const next = current.includes(id)
-      ? current.filter((s) => s !== id)
-      : [...current, id];
-    setValue("specialization_ids", next);
   }
 
   if (tempPasswordResult) {
@@ -408,25 +383,6 @@ export function CreateDoctorModal({ onCreated }: Props) {
                   />
                 </div>
 
-                {specsData?.data && specsData.data.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Специализации</Label>
-                    <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded-md p-2">
-                      {specsData.data.map((spec) => (
-                        <label
-                          key={spec.id}
-                          className="flex items-center gap-2 text-sm cursor-pointer"
-                        >
-                          <Checkbox
-                            checked={selectedSpecs.includes(spec.id)}
-                            onCheckedChange={() => toggleSpec(spec.id)}
-                          />
-                          {spec.name}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
