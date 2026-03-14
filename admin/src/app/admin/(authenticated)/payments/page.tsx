@@ -1,0 +1,256 @@
+"use client";
+
+import { useState, useMemo, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { ColumnDef } from "@tanstack/react-table";
+import type { DateRange } from "react-day-picker";
+import api from "@/lib/api";
+import type { PaymentItem, PaymentsSummary, PaginatedResponse, Receipt } from "@/types";
+import { DataTable } from "@/components/shared/DataTable";
+import { ErrorState } from "@/components/shared/ErrorState";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { DateRangePicker } from "@/components/shared/DateRangePicker";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { ReceiptDialog } from "@/components/features/payments/ReceiptDialog";
+import { RefundModal } from "@/components/features/payments/RefundModal";
+import { ManualPaymentModal } from "@/components/features/payments/ManualPaymentModal";
+import { Receipt as ReceiptIcon, X, Plus, RotateCcw, ArrowUp, ArrowDown } from "lucide-react";
+import { format } from "date-fns";
+import { totalPages } from "@/lib/pagination";
+import { Suspense } from "react";
+
+function PaymentsContent() {
+  const [productType, setProductType] = useState("all");
+  const [status, setStatus] = useState("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(20);
+
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receiptData, setReceiptData] = useState<Receipt[] | null>(null);
+  const [refundOpen, setRefundOpen] = useState(false);
+  const [refundPayment, setRefundPayment] = useState<PaymentItem | null>(null);
+  const [manualOpen, setManualOpen] = useState(false);
+
+  const params = new URLSearchParams();
+  params.set("limit", String(perPage));
+  params.set("offset", String((page - 1) * perPage));
+  params.set("sort_by", "created_at");
+  params.set("sort_order", sortOrder);
+  if (productType !== "all") params.set("product_type", productType);
+  if (status !== "all") params.set("status", status);
+  if (dateRange?.from) params.set("date_from", format(dateRange.from, "yyyy-MM-dd"));
+  if (dateRange?.to) params.set("date_to", format(dateRange.to, "yyyy-MM-dd"));
+
+  const { data, isLoading, error, refetch } = useQuery<PaginatedResponse<PaymentItem> & { summary: PaymentsSummary }>({
+    queryKey: ["payments", params.toString()],
+    queryFn: () => api.get(`/admin/payments?${params}`).then((r) => r.data),
+  });
+
+  const openReceipt = useCallback(async (paymentId: string) => {
+    try {
+      const { data } = await api.get(`/subscriptions/payments/${paymentId}/receipt`);
+      setReceiptData(Array.isArray(data) ? data : [data]);
+      setReceiptOpen(true);
+    } catch { /* handled by interceptor */ }
+  }, []);
+
+  const toggleSort = useCallback(() => {
+    setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
+    setPage(1);
+  }, []);
+
+  const columns = useMemo<ColumnDef<PaymentItem>[]>(() => {
+    const SortIcon = sortOrder === "desc" ? ArrowDown : ArrowUp;
+    return [
+      {
+        accessorKey: "created_at",
+        header: () => (
+          <button type="button" className="inline-flex items-center gap-1 hover:text-foreground" onClick={toggleSort}>
+            Дата <SortIcon className="h-3 w-3" />
+          </button>
+        ),
+        cell: ({ row }) => {
+          const d = row.original.paid_at || row.original.created_at;
+          return format(new Date(d), "dd.MM.yyyy HH:mm");
+        },
+      },
+      {
+        accessorKey: "user",
+        header: "Плательщик",
+        cell: ({ row }) => {
+          const u = row.original.user;
+          if (!u) return "—";
+          return (
+            <div>
+              <p className="font-medium text-sm">{u.full_name}</p>
+              <p className="text-xs text-muted-foreground">{u.email}</p>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "product_type",
+        header: "Тип",
+        cell: ({ row }) => <StatusBadge status={row.original.product_type} />,
+      },
+      {
+        accessorKey: "amount",
+        header: "Сумма",
+        cell: ({ row }) => {
+          const p = row.original;
+          const title = p.description ? `Описание: ${p.description}` : undefined;
+          return (
+            <span title={title} className={p.description ? "cursor-help" : ""}>
+              {p.amount.toLocaleString("ru-RU")} ₽
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: "payment_provider",
+        header: "Провайдер",
+        cell: ({ row }) => row.original.payment_provider || "—",
+      },
+      {
+        accessorKey: "status",
+        header: "Статус",
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      },
+      {
+        id: "receipt",
+        header: "Чек",
+        cell: ({ row }) =>
+          row.original.has_receipt ? (
+            <Button variant="ghost" size="icon" onClick={() => openReceipt(row.original.id)}>
+              <ReceiptIcon className="h-4 w-4" />
+            </Button>
+          ) : null,
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => {
+          const p = row.original;
+          const canRefund = (p.status === "succeeded" || p.status === "partially_refunded");
+          return canRefund ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setRefundPayment(p);
+                setRefundOpen(true);
+              }}
+            >
+              <RotateCcw className="mr-1 h-3 w-3" /> Возврат
+            </Button>
+          ) : null;
+        },
+      },
+    ];
+  }, [sortOrder, toggleSort, openReceipt]);
+
+  const hasFilters = productType !== "all" || status !== "all" || !!dateRange?.from;
+
+  if (error) return <ErrorState message="Не удалось загрузить платежи" onRetry={refetch} />;
+
+  return (
+    <div className="space-y-4">
+      <Breadcrumbs items={[{ label: "Платежи" }]} />
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Платежи</h1>
+        <Button onClick={() => setManualOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Добавить платёж
+        </Button>
+      </div>
+
+      {data?.summary && (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card>
+            <CardContent className="pt-4">
+              <p className="text-sm text-muted-foreground">Общая сумма</p>
+              <p className="text-xl font-bold">{data.summary.total_amount.toLocaleString("ru-RU")} ₽</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <p className="text-sm text-muted-foreground">Оплачено</p>
+              <p className="text-xl font-bold">{data.summary.count_completed}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <p className="text-sm text-muted-foreground">Ожидают</p>
+              <p className="text-xl font-bold">{data.summary.count_pending}</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Select value={productType} onValueChange={(v) => { setProductType(v); setPage(1); }}>
+          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все типы</SelectItem>
+            <SelectItem value="entry_fee">Вступительный</SelectItem>
+            <SelectItem value="subscription">Подписка</SelectItem>
+            <SelectItem value="event">Мероприятие</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
+          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все статусы</SelectItem>
+            <SelectItem value="pending">Ожидает</SelectItem>
+            <SelectItem value="succeeded">Оплачен</SelectItem>
+            <SelectItem value="failed">Ошибка</SelectItem>
+            <SelectItem value="refunded">Возвращён</SelectItem>
+            <SelectItem value="partially_refunded">Частичный возврат</SelectItem>
+          </SelectContent>
+        </Select>
+        <DateRangePicker
+          value={dateRange}
+          onChange={(r) => { setDateRange(r); setPage(1); }}
+          placeholder="Период"
+        />
+        {hasFilters && (
+          <Button variant="ghost" size="sm" onClick={() => { setProductType("all"); setStatus("all"); setDateRange(undefined); setPage(1); }}>
+            <X className="mr-1 h-3 w-3" /> Сбросить
+          </Button>
+        )}
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={data?.data || []}
+        page={page}
+        perPage={perPage}
+        total={data?.total}
+        totalPages={totalPages(data?.total ?? 0, perPage)}
+        onPageChange={setPage}
+        onPerPageChange={(pp) => { setPerPage(pp); setPage(1); }}
+        isLoading={isLoading}
+        emptyTitle="Нет платежей"
+      />
+
+      <ReceiptDialog open={receiptOpen} onOpenChange={setReceiptOpen} receipts={receiptData} />
+
+      <RefundModal
+        open={refundOpen}
+        onOpenChange={setRefundOpen}
+        payment={refundPayment}
+        onClose={() => setRefundPayment(null)}
+      />
+
+      <ManualPaymentModal open={manualOpen} onOpenChange={setManualOpen} />
+    </div>
+  );
+}
+
+export default function PaymentsPage() {
+  return <Suspense><PaymentsContent /></Suspense>;
+}
