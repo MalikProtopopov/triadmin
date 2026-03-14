@@ -5,22 +5,23 @@ const PUBLIC_PATHS = ["/admin/login", "/admin/forgot-password", "/admin/reset-pa
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const hasRefreshToken = request.cookies.has("refresh_token");
+  const isAuthenticated = request.cookies.has("admin_auth");
 
   if (pathname === "/admin" || pathname === "/admin/") {
-    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    const target = isAuthenticated ? "/admin/dashboard" : "/admin/login";
+    return NextResponse.redirect(new URL(target, request.url));
   }
 
   const isPublicPath = PUBLIC_PATHS.some((p) => pathname === p);
 
   if (isPublicPath) {
-    if (hasRefreshToken) {
+    if (isAuthenticated) {
       return NextResponse.redirect(new URL("/admin/dashboard", request.url));
     }
     return NextResponse.next();
   }
 
-  if (!hasRefreshToken) {
+  if (!isAuthenticated) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 

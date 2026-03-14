@@ -66,6 +66,9 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         setAccessToken(null);
+        if (typeof document !== "undefined") {
+          document.cookie = "admin_auth=; path=/; max-age=0";
+        }
         if (typeof window !== "undefined") {
           window.location.href = "/admin/login";
         }
@@ -89,8 +92,11 @@ api.interceptors.response.use(
 
     if (status === 403 && errorCode === "ACCOUNT_DEACTIVATED") {
       toast.error("Аккаунт деактивирован. Обратитесь к администратору.");
+      setAccessToken(null);
+      if (typeof document !== "undefined") {
+        document.cookie = "admin_auth=; path=/; max-age=0";
+      }
       if (typeof window !== "undefined") {
-        setAccessToken(null);
         window.location.href = "/admin/login";
       }
     } else if (status === 403) {

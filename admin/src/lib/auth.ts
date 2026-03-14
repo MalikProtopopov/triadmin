@@ -20,9 +20,22 @@ function userFromToken(token: string, email = ""): User {
   };
 }
 
+export function setSessionCookie() {
+  if (typeof document !== "undefined") {
+    document.cookie = "admin_auth=1; path=/; max-age=604800; SameSite=Lax";
+  }
+}
+
+export function clearSessionCookie() {
+  if (typeof document !== "undefined") {
+    document.cookie = "admin_auth=; path=/; max-age=0";
+  }
+}
+
 export async function login(email: string, password: string): Promise<User> {
   const { data } = await api.post("/auth/login", { email, password });
   setAccessToken(data.access_token);
+  setSessionCookie();
   return userFromToken(data.access_token, email);
 }
 
@@ -31,6 +44,7 @@ export async function logout(): Promise<void> {
     await api.post("/auth/logout");
   } finally {
     setAccessToken(null);
+    clearSessionCookie();
   }
 }
 
@@ -38,9 +52,11 @@ export async function refreshSession(): Promise<User | null> {
   try {
     const { data } = await api.post("/auth/refresh");
     setAccessToken(data.access_token);
+    setSessionCookie();
     return userFromToken(data.access_token);
   } catch {
     setAccessToken(null);
+    clearSessionCookie();
     return null;
   }
 }
