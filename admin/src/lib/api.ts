@@ -40,7 +40,9 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isRefreshRequest = originalRequest.url?.includes("/auth/refresh");
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isRefreshRequest) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -69,7 +71,7 @@ api.interceptors.response.use(
         if (typeof document !== "undefined") {
           document.cookie = "admin_auth=; path=/; max-age=0";
         }
-        if (typeof window !== "undefined") {
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/admin/login")) {
           window.location.href = "/admin/login";
         }
         return Promise.reject(refreshError);

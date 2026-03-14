@@ -63,7 +63,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Администраторы", href: "/admin/users", icon: <UserCog className="h-4 w-4" />, roles: ["admin"] },
 ];
 
-export function Sidebar() {
+export function Sidebar({ mobile }: { mobile?: boolean } = {}) {
   const pathname = usePathname();
   const { hasAnyRole } = useRole();
   const user = useAuth((s) => s.user);
@@ -72,7 +72,10 @@ export function Sidebar() {
   const visibleItems = NAV_ITEMS.filter((item) => !item.roles || hasAnyRole(item.roles));
 
   return (
-    <aside className="hidden xl:flex flex-col w-64 border-r bg-card h-screen sticky top-0">
+    <aside className={cn(
+      "flex flex-col w-64 border-r bg-card",
+      mobile ? "h-full" : "hidden xl:flex h-screen sticky top-0"
+    )}>
       <div className="p-4 border-b">
         <h1 className="font-semibold text-sm">Ассоциация трихологов</h1>
         {user && <p className="text-xs text-muted-foreground mt-0.5 truncate">{user.email}</p>}

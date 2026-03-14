@@ -15,7 +15,7 @@ export function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="p-0 w-64">
-          <Sidebar />
+          <Sidebar mobile />
         </SheetContent>
       </Sheet>
       <span className="ml-3 font-semibold text-sm">Ассоциация трихологов</span>
