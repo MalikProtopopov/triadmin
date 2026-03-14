@@ -22,10 +22,10 @@ interface ThemeFormData {
   title: string;
   slug: string;
   is_active: boolean;
-  sort_order: number;
+  sort_order: number | "";
 }
 
-const EMPTY_FORM: ThemeFormData = { title: "", slug: "", is_active: true, sort_order: 0 };
+const EMPTY_FORM: ThemeFormData = { title: "", slug: "", is_active: true, sort_order: "" };
 
 function slugify(text: string): string {
   return text
@@ -104,7 +104,7 @@ export default function ArticleThemesPage() {
           title: form.title,
           slug: form.slug || null,
           is_active: form.is_active,
-          sort_order: form.sort_order,
+          sort_order: form.sort_order === "" ? 0 : form.sort_order,
         });
         toast.success("Тема обновлена");
       } else {
@@ -112,7 +112,7 @@ export default function ArticleThemesPage() {
           title: form.title,
           slug: form.slug || null,
           is_active: form.is_active,
-          sort_order: form.sort_order,
+          sort_order: form.sort_order === "" ? 0 : form.sort_order,
         });
         toast.success("Тема создана");
       }
@@ -200,7 +200,7 @@ export default function ArticleThemesPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Порядок сортировки</Label>
-                <Input type="number" value={form.sort_order} onChange={(e) => setForm((p) => ({ ...p, sort_order: Number(e.target.value) }))} />
+                <Input type="number" placeholder="0" value={form.sort_order} onChange={(e) => setForm((p) => ({ ...p, sort_order: e.target.value === "" ? "" : Number(e.target.value) }))} />
               </div>
               <div className="flex items-center gap-3 pt-6">
                 <Switch checked={form.is_active} onCheckedChange={(v) => setForm((p) => ({ ...p, is_active: v }))} />

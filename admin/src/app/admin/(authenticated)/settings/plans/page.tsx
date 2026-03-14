@@ -28,7 +28,7 @@ export default function PlansPage() {
   const [formDuration, setFormDuration] = useState(12);
   const [formDescription, setFormDescription] = useState("");
   const [formActive, setFormActive] = useState(true);
-  const [formSortOrder, setFormSortOrder] = useState(0);
+  const [formSortOrder, setFormSortOrder] = useState<number | "">(0);
   const [deleteTarget, setDeleteTarget] = useState<Plan | null>(null);
 
   const { data: plans, isLoading, error, refetch } = useQuery<Plan[]>({
@@ -44,7 +44,7 @@ export default function PlansPage() {
       duration_months: formDuration,
       description: formDescription || null,
       is_active: formActive,
-      sort_order: formSortOrder,
+      sort_order: formSortOrder === "" ? 0 : formSortOrder,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plans"] });
@@ -61,7 +61,7 @@ export default function PlansPage() {
       duration_months: formDuration,
       description: formDescription || null,
       is_active: formActive,
-      sort_order: formSortOrder,
+      sort_order: formSortOrder === "" ? 0 : formSortOrder,
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plans"] });
@@ -169,7 +169,7 @@ export default function PlansPage() {
             <div className="grid gap-4 grid-cols-2">
               <div className="space-y-2">
                 <Label>Порядок сортировки</Label>
-                <Input type="number" value={formSortOrder} onChange={(e) => setFormSortOrder(Number(e.target.value))} />
+                <Input type="number" placeholder="0" value={formSortOrder} onChange={(e) => setFormSortOrder(e.target.value === "" ? "" : Number(e.target.value))} />
               </div>
               <div className="flex items-center gap-2 pt-6">
                 <Switch id="edit-plan-active" checked={formActive} onCheckedChange={setFormActive} className="shrink-0" />
@@ -215,7 +215,7 @@ export default function PlansPage() {
             <div className="grid gap-4 grid-cols-2">
               <div className="space-y-2">
                 <Label>Порядок сортировки</Label>
-                <Input type="number" value={formSortOrder} onChange={(e) => setFormSortOrder(Number(e.target.value))} />
+                <Input type="number" placeholder="0" value={formSortOrder} onChange={(e) => setFormSortOrder(e.target.value === "" ? "" : Number(e.target.value))} />
               </div>
               <div className="flex items-center gap-2 pt-6">
                 <Switch id="add-plan-active" checked={formActive} onCheckedChange={setFormActive} className="shrink-0" />

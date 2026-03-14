@@ -25,12 +25,12 @@ interface TariffFormData {
   member_price: number;
   benefits: string[];
   seats_limit: number | null;
-  sort_order: number;
+  sort_order: number | "";
 }
 
 const EMPTY_TARIFF: TariffFormData = {
   name: "", description: "", conditions: "", details: "",
-  price: 0, member_price: 0, benefits: [], seats_limit: null, sort_order: 0,
+  price: 0, member_price: 0, benefits: [], seats_limit: null, sort_order: "",
 };
 
 interface TariffSectionProps {
@@ -82,7 +82,7 @@ export function TariffSection({ eventId, tariffs, isEditing }: TariffSectionProp
         member_price: form.member_price,
         benefits: form.benefits.filter(Boolean),
         seats_limit: form.seats_limit,
-        sort_order: form.sort_order,
+        sort_order: form.sort_order === "" ? 0 : form.sort_order,
       };
       if (editingId) {
         await api.patch(`/admin/events/${eventId}/tariffs/${editingId}`, payload);
@@ -204,7 +204,7 @@ export function TariffSection({ eventId, tariffs, isEditing }: TariffSectionProp
               </div>
               <div className="space-y-2">
                 <Label>Порядок сортировки</Label>
-                <Input type="number" value={form.sort_order} onChange={(e) => setForm((p) => ({ ...p, sort_order: Number(e.target.value) }))} />
+                <Input type="number" placeholder="0" value={form.sort_order} onChange={(e) => setForm((p) => ({ ...p, sort_order: e.target.value === "" ? "" : Number(e.target.value) }))} />
               </div>
             </div>
             <div className="space-y-2">
