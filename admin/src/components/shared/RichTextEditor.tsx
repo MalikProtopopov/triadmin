@@ -58,7 +58,7 @@ export function RichTextEditor({ content, onChange, placeholder = "Начнит�
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
     editorProps: {
       attributes: {
-        class: "prose prose-sm max-w-none min-h-[200px] p-4 focus:outline-none",
+        class: "min-h-[200px] p-4 text-sm",
       },
     },
   });
