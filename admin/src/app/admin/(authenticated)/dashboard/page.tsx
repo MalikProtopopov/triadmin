@@ -43,7 +43,7 @@ export default function DashboardPage() {
             sort_by: "event_date",
             sort_order: "asc",
             limit: 5,
-            status: "published",
+            status: "upcoming",
           },
         })
         .then((r) => r.data),
