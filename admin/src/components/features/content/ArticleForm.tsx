@@ -93,7 +93,7 @@ export function ArticleForm({ article }: ArticleFormProps) {
       };
 
       const fd = new FormData();
-      fd.append("body", JSON.stringify(jsonBody));
+      fd.append("body", new Blob([JSON.stringify(jsonBody)], { type: "application/json" }));
       if (coverImage) fd.append("cover_image", coverImage);
 
       if (isEditing) {

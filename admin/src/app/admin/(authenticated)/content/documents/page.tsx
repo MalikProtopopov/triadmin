@@ -102,7 +102,7 @@ export default function OrgDocumentsPage() {
 
   function buildFormData(jsonBody: Record<string, unknown>, file: File | null): globalThis.FormData {
     const fd = new globalThis.FormData();
-    fd.append("body", JSON.stringify(jsonBody));
+    fd.append("body", new Blob([JSON.stringify(jsonBody)], { type: "application/json" }));
     if (file) fd.append("file", file);
     return fd;
   }
