@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ColumnDef, type SortingState } from "@tanstack/react-table";
 import api from "@/lib/api";
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SortableHeader } from "@/components/shared/SortableHeader";
 import { Eye, Upload, X, FileEdit, GraduationCap } from "lucide-react";
+import { CreateDoctorModal } from "@/components/features/doctors/CreateDoctorModal";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useRole } from "@/hooks/useRole";
@@ -100,6 +101,7 @@ function getColumns(sorting: SortingState, onSort: (id: string) => void): Column
 
 function DoctorsListContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { isAdmin } = useRole();
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
@@ -173,11 +175,14 @@ function DoctorsListContent() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Врачи</h1>
         {isAdmin && (
-          <Button asChild>
-            <Link href="/admin/portal-users/import">
-              <Upload className="mr-2 h-4 w-4" /> Импорт из Excel
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <CreateDoctorModal onCreated={(profileId) => router.push(`/admin/doctors/${profileId}`)} />
+            <Button asChild>
+              <Link href="/admin/portal-users/import">
+                <Upload className="mr-2 h-4 w-4" /> Импорт из Excel
+              </Link>
+            </Button>
+          </div>
         )}
       </div>
 
