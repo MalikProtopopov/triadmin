@@ -34,7 +34,7 @@ import { FileUpload } from "@/components/shared/FileUpload";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Plus, Pencil, Trash2, GripVertical, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, GripVertical, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 function SortableDocCard({
@@ -294,6 +294,7 @@ export default function OrgDocumentsPage() {
               disabled={!formTitle.trim() || !hasContentOrFile || createDoc.isPending || updateDoc.isPending}
               onClick={() => editDoc ? updateDoc.mutate(editDoc.id) : createDoc.mutate()}
             >
+              {(createDoc.isPending || updateDoc.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {editDoc ? "Сохранить" : "Создать"}
             </Button>
           </DialogFooter>

@@ -16,7 +16,7 @@ import { ErrorState } from "@/components/shared/ErrorState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function PlansPage() {
@@ -218,6 +218,7 @@ export default function PlansPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditPlan(null)}>Отмена</Button>
             <Button disabled={!formName || updatePlan.isPending} onClick={() => editPlan && updatePlan.mutate(editPlan.id)}>
+              {updatePlan.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Сохранить
             </Button>
           </DialogFooter>
@@ -276,6 +277,7 @@ export default function PlansPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddOpen(false)}>Отмена</Button>
             <Button disabled={!formName || !formCode || createPlan.isPending} onClick={() => createPlan.mutate()}>
+              {createPlan.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Создать
             </Button>
           </DialogFooter>

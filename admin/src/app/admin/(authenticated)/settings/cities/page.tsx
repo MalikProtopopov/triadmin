@@ -14,7 +14,7 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { toast } from "sonner";
 
@@ -169,6 +169,7 @@ export default function CitiesPage() {
               disabled={!name.trim() || createCity.isPending || updateCity.isPending}
               onClick={() => editing ? updateCity.mutate({ id: editing.id, name }) : createCity.mutate()}
             >
+              {(createCity.isPending || updateCity.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {editing ? "Сохранить" : "Создать"}
             </Button>
           </DialogFooter>

@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Trash2, Pencil, X } from "lucide-react";
+import { Plus, Trash2, Pencil, X, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -207,6 +207,7 @@ export default function UsersPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddOpen(false)}>Отмена</Button>
             <Button disabled={!addEmail || addPassword.length < 8 || !addRole || addUser.isPending} onClick={() => addUser.mutate()}>
+              {addUser.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Добавить
             </Button>
           </DialogFooter>
@@ -243,6 +244,7 @@ export default function UsersPage() {
               disabled={!editTarget || updateUser.isPending}
               onClick={() => editTarget && updateUser.mutate(editTarget.id)}
             >
+              {updateUser.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Сохранить
             </Button>
           </DialogFooter>

@@ -15,7 +15,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, Loader2 } from "lucide-react";
 import { totalPages } from "@/lib/pagination";
 import { toast } from "sonner";
 
@@ -249,6 +249,7 @@ export default function SeoSettingsPage() {
               disabled={saveMutation.isPending || (!editingSlug && !form.slug.trim())}
               onClick={() => saveMutation.mutate()}
             >
+              {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {editingSlug ? "Сохранить" : "Создать"}
             </Button>
           </DialogFooter>

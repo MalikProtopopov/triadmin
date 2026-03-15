@@ -31,7 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { RichTextEditor } from "@/components/shared/RichTextEditor";
-import { Plus, Trash2, GripVertical, Pencil, Type, ImageIcon, Video, LayoutGrid, LinkIcon } from "lucide-react";
+import { Plus, Trash2, GripVertical, Pencil, Type, ImageIcon, Video, LayoutGrid, LinkIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const BLOCK_TYPE_LABELS: Record<ContentBlockType, string> = {
@@ -364,6 +364,7 @@ export function ContentBlocksEditor({ entityType, entityId }: ContentBlocksEdito
           <DialogFooter>
             <Button variant="outline" onClick={() => setModalOpen(false)}>Отмена</Button>
             <Button onClick={handleSave} disabled={createBlock.isPending || updateBlock.isPending}>
+              {(createBlock.isPending || updateBlock.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {editingBlock ? "Сохранить" : "Добавить"}
             </Button>
           </DialogFooter>
