@@ -166,7 +166,7 @@ export default function EventDetailPage() {
                   <p className="font-medium">{g.title}</p>
                   <div className="flex items-center gap-2">
                     <StatusBadge status={g.access_level} label={g.access_level === "public" ? "Всем" : "Членам"} />
-                    <span className="text-xs text-muted-foreground">{g.photos_count} фото</span>
+                    <span className="text-xs text-muted-foreground">{g.photos_count ?? 0} фото</span>
                   </div>
                   <p className="text-xs text-muted-foreground">{format(new Date(g.created_at), "dd.MM.yyyy")}</p>
                 </div>

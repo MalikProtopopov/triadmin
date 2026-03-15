@@ -28,7 +28,7 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
   const [reminderOpen, setReminderOpen] = useState(false);
 
   const fullName = `${doctor.last_name} ${doctor.first_name} ${doctor.middle_name || ""}`.trim();
-  const isPending = doctor.moderation_status === "pending";
+  const isPending = doctor.moderation_status === "pending_review";
   const hasDraft = !!doctor.pending_draft;
   const isApproved = doctor.moderation_status === "approved";
 

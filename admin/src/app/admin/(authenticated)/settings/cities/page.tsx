@@ -133,6 +133,9 @@ export default function CitiesPage() {
                       >
                         {city.name}
                       </span>
+                      {city.slug && (
+                        <p className="text-xs text-muted-foreground font-mono">/{city.slug}</p>
+                      )}
                       {city.doctors_count != null && (
                         <p className="text-xs text-muted-foreground">Врачей: {city.doctors_count}</p>
                       )}

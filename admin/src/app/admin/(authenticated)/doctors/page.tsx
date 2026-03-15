@@ -201,8 +201,7 @@ function DoctorsListContent() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Все статусы</SelectItem>
-            <SelectItem value="new">Новый</SelectItem>
-            <SelectItem value="pending">На модерации</SelectItem>
+            <SelectItem value="pending_review">На модерации</SelectItem>
             <SelectItem value="approved">Одобрен</SelectItem>
             <SelectItem value="rejected">Отклонён</SelectItem>
           </SelectContent>

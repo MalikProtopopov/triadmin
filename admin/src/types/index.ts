@@ -1,13 +1,13 @@
 export type Role = "admin" | "manager" | "accountant" | "doctor" | "non_doctor";
 
-export type ModerationStatus = "new" | "pending" | "approved" | "rejected";
+export type ModerationStatus = "pending_review" | "approved" | "rejected";
 export type DoctorStatus = "pending_review" | "approved" | "rejected" | "active" | "deactivated";
 export type SubscriptionStatus = "active" | "expired" | "expiring_soon" | "never";
-export type PaymentStatus = "pending" | "processing" | "succeeded" | "failed" | "refunded" | "partially_refunded";
-export type ProductType = "entry_fee" | "annual_fee" | "subscription" | "event";
-export type EventStatus = "draft" | "published" | "upcoming" | "ongoing" | "finished" | "cancelled";
+export type PaymentStatus = "pending" | "succeeded" | "failed" | "refunded" | "partially_refunded";
+export type ProductType = "entry_fee" | "subscription" | "event";
+export type EventStatus = "upcoming" | "ongoing" | "finished" | "cancelled";
 export type ArticleStatus = "draft" | "published" | "archived";
-export type VotingStatus = "draft" | "active" | "finished" | "cancelled";
+export type VotingStatus = "active" | "closed" | "cancelled";
 export type NotificationType = "reminder" | "payment" | "moderation" | "manual";
 export type NotificationChannel = "email" | "telegram" | "both";
 export type ContentBlockType = "text" | "image" | "video" | "gallery" | "link";
@@ -251,6 +251,9 @@ export interface ContentBlock {
   link_url: string | null;
   link_label: string | null;
   device_type: DeviceType;
+  block_metadata: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Plan {
@@ -297,6 +300,7 @@ export interface VotingSession {
   starts_at: string;
   ends_at: string;
   candidates_count: number;
+  created_at: string;
 }
 
 export interface VotingCandidate {

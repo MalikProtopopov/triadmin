@@ -25,6 +25,8 @@ function NotificationsContent() {
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
+  const [filterUserId, setFilterUserId] = useState("");
+  const [filterUserSearch, setFilterUserSearch] = useState("");
   const [sendOpen, setSendOpen] = useState(false);
   const [sendUserId, setSendUserId] = useState("");
   const [sendUserSearch, setSendUserSearch] = useState("");
@@ -34,12 +36,21 @@ function NotificationsContent() {
   const [sendBody, setSendBody] = useState("");
   const [sendLoading, setSendLoading] = useState(false);
 
+  const debouncedFilterUserSearch = useDebounce(filterUserSearch);
   const debouncedUserSearch = useDebounce(sendUserSearch);
+
+  const { data: filterUserResults } = useQuery<PaginatedResponse<{ id: string; email: string; full_name: string | null }>>({
+    queryKey: ["portal-users-search-filter", debouncedFilterUserSearch],
+    queryFn: () => api.get(`/admin/portal-users?search=${encodeURIComponent(debouncedFilterUserSearch)}&limit=10`).then((r) => r.data),
+    enabled: debouncedFilterUserSearch.length >= 2 && !filterUserId,
+  });
+  const filterUsers = filterUserResults?.data || [];
 
   const params = new URLSearchParams();
   params.set("limit", String(perPage));
   params.set("offset", String((page - 1) * perPage));
   if (status !== "all") params.set("status", status);
+  if (filterUserId) params.set("user_id", filterUserId);
 
   const { data, isLoading, error, refetch } = useQuery<PaginatedResponse<NotificationItem>>({
     queryKey: ["notifications", params.toString()],
@@ -111,7 +122,7 @@ function NotificationsContent() {
     },
   ], []);
 
-  const hasFilters = status !== "all";
+  const hasFilters = status !== "all" || !!filterUserId;
 
   if (error) return <ErrorState message="Не удалось загрузить уведомления" onRetry={refetch} />;
 
@@ -135,8 +146,30 @@ function NotificationsContent() {
             <SelectItem value="pending">Ожидает</SelectItem>
           </SelectContent>
         </Select>
+        <div className="relative">
+          <Input
+            className="w-64"
+            value={filterUserSearch}
+            onChange={(e) => { setFilterUserSearch(e.target.value); setFilterUserId(""); setPage(1); }}
+            placeholder="Фильтр по пользователю..."
+          />
+          {filterUsers.length > 0 && !filterUserId && (
+            <div className="absolute z-10 mt-1 w-full border rounded-md bg-popover max-h-40 overflow-auto shadow-md">
+              {filterUsers.map((u) => (
+                <button
+                  key={u.id}
+                  type="button"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
+                  onClick={() => { setFilterUserId(u.id); setFilterUserSearch(`${u.full_name || ""} (${u.email})`); setPage(1); }}
+                >
+                  {u.full_name ? `${u.full_name} — ${u.email}` : u.email}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={() => { setStatus("all"); setPage(1); }}>
+          <Button variant="ghost" size="sm" onClick={() => { setStatus("all"); setFilterUserId(""); setFilterUserSearch(""); setPage(1); }}>
             <X className="mr-1 h-3 w-3" /> Сбросить
           </Button>
         )}

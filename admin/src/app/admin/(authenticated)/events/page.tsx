@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, type SortingState } from "@tanstack/react-table";
+import type { DateRange } from "react-day-picker";
 import api from "@/lib/api";
 import type { EventListItem, PaginatedResponse } from "@/types";
 import { DataTable } from "@/components/shared/DataTable";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { SortableHeader } from "@/components/shared/SortableHeader";
+import { DateRangePicker } from "@/components/shared/DateRangePicker";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,14 +25,24 @@ import { toast } from "sonner";
 export default function EventsPage() {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [deleteTarget, setDeleteTarget] = useState<EventListItem | null>(null);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "event_date", desc: true },
+  ]);
 
   const params = new URLSearchParams();
   params.set("limit", String(perPage));
   params.set("offset", String((page - 1) * perPage));
   if (statusFilter !== "all") params.set("status", statusFilter);
+  if (dateRange?.from) params.set("date_from", format(dateRange.from, "yyyy-MM-dd"));
+  if (dateRange?.to) params.set("date_to", format(dateRange.to, "yyyy-MM-dd"));
+  const sortBy = sorting[0]?.id || "event_date";
+  const sortOrder = sorting[0]?.desc ? "desc" : "asc";
+  params.set("sort_by", sortBy);
+  params.set("sort_order", sortOrder);
 
   const { data, isLoading, error, refetch } = useQuery<PaginatedResponse<EventListItem>>({
     queryKey: ["events", params.toString()],
@@ -53,6 +66,16 @@ export default function EventsPage() {
     setDeleteTarget(item);
   }
 
+  const handleSort = useCallback((columnId: string) => {
+    setSorting((prev) => {
+      const current = prev.find((s) => s.id === columnId);
+      return [{ id: columnId, desc: current ? !current.desc : true }];
+    });
+    setPage(1);
+  }, []);
+
+  const hasFilters = statusFilter !== "all" || !!dateRange?.from;
+
   const columns = useMemo<ColumnDef<EventListItem>[]>(() => [
     {
       accessorKey: "title",
@@ -65,7 +88,8 @@ export default function EventsPage() {
     },
     {
       accessorKey: "event_date",
-      header: "Дата",
+      id: "event_date",
+      header: () => <SortableHeader label="Дата" columnId="event_date" sorting={sorting} onSort={handleSort} />,
       cell: ({ row }) => format(new Date(row.original.event_date), "dd.MM.yyyy"),
     },
     { accessorKey: "location", header: "Место", cell: ({ row }) => row.original.location || "—" },
@@ -97,7 +121,7 @@ export default function EventsPage() {
         </DropdownMenu>
       ),
     },
-  ], []);  
+  ], [sorting, handleSort]);
 
   if (error) return <ErrorState message="Не удалось загрузить мероприятия" onRetry={refetch} />;
 
@@ -109,7 +133,7 @@ export default function EventsPage() {
         <Button asChild><Link href="/admin/events/new"><Plus className="mr-2 h-4 w-4" /> Создать</Link></Button>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -120,8 +144,13 @@ export default function EventsPage() {
             <SelectItem value="cancelled">Отменённые</SelectItem>
           </SelectContent>
         </Select>
-        {statusFilter !== "all" && (
-          <Button variant="ghost" size="sm" onClick={() => { setStatusFilter("all"); setPage(1); }}>
+        <DateRangePicker
+          value={dateRange}
+          onChange={(r) => { setDateRange(r); setPage(1); }}
+          placeholder="Период"
+        />
+        {hasFilters && (
+          <Button variant="ghost" size="sm" onClick={() => { setStatusFilter("all"); setDateRange(undefined); setPage(1); }}>
             <X className="mr-1 h-3 w-3" /> Сбросить
           </Button>
         )}

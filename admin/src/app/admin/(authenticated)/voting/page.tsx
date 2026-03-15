@@ -89,17 +89,12 @@ export default function VotingPage() {
                   <Eye className="mr-2 h-4 w-4" /> Посмотреть
                 </Link>
               </DropdownMenuItem>
-              {s.status === "draft" && (
-                <DropdownMenuItem onClick={() => setActionTarget({ session: s, action: "active" })}>
-                  <Play className="mr-2 h-4 w-4" /> Открыть
-                </DropdownMenuItem>
-              )}
               {s.status === "active" && (
-                <DropdownMenuItem onClick={() => setActionTarget({ session: s, action: "finished" })}>
+                <DropdownMenuItem onClick={() => setActionTarget({ session: s, action: "closed" })}>
                   <Square className="mr-2 h-4 w-4" /> Закрыть
                 </DropdownMenuItem>
               )}
-              {(s.status === "draft" || s.status === "active") && (
+              {(s.status === "active") && (
                 <DropdownMenuItem onClick={() => setActionTarget({ session: s, action: "cancelled" })} className="text-destructive">
                   <XCircle className="mr-2 h-4 w-4" /> Отменить
                 </DropdownMenuItem>
@@ -128,9 +123,9 @@ export default function VotingPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Все статусы</SelectItem>
-            <SelectItem value="draft">Черновик</SelectItem>
             <SelectItem value="active">Активна</SelectItem>
-            <SelectItem value="finished">Завершена</SelectItem>
+            <SelectItem value="closed">Завершена</SelectItem>
+            <SelectItem value="cancelled">Отменена</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -151,15 +146,13 @@ export default function VotingPage() {
       <ConfirmDialog
         open={!!actionTarget}
         onOpenChange={(o) => !o && setActionTarget(null)}
-        title={
-          actionTarget?.action === "active" ? "Открыть голосование?" :
-          actionTarget?.action === "finished" ? "Закрыть голосование?" :
+        title=      {
+          actionTarget?.action === "closed" ? "Закрыть голосование?" :
           "Отменить голосование?"
         }
         description={`Сессия «${actionTarget?.session.title}»`}
         confirmLabel={
-          actionTarget?.action === "active" ? "Открыть" :
-          actionTarget?.action === "finished" ? "Закрыть" :
+          actionTarget?.action === "closed" ? "Закрыть" :
           "Отменить"
         }
         variant={actionTarget?.action === "cancelled" ? "destructive" : "default"}

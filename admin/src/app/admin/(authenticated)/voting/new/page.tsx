@@ -47,7 +47,10 @@ export default function NewVotingPage() {
   const mutation = useMutation({
     mutationFn: (data: FormData) =>
       api.post("/admin/voting", {
-        ...data,
+        title: data.title,
+        description: data.description || null,
+        starts_at: new Date(data.starts_at).toISOString(),
+        ends_at: new Date(data.ends_at).toISOString(),
         candidates: selectedCandidates.map((id) => ({
           doctor_profile_id: id,
           description: candidateDescriptions[id] || null,

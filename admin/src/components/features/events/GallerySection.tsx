@@ -101,7 +101,7 @@ export function GallerySection({ eventId, galleries }: GallerySectionProps) {
                     <TableCell>
                       <StatusBadge status={g.access_level} label={g.access_level === "public" ? "Всем" : "Членам"} />
                     </TableCell>
-                    <TableCell>{g.photos_count}</TableCell>
+                    <TableCell>{g.photos_count ?? 0}</TableCell>
                     <TableCell>{format(new Date(g.created_at), "dd.MM.yyyy")}</TableCell>
                     <TableCell>
                       <Button

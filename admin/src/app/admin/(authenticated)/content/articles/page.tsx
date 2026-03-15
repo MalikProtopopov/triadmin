@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { ColumnDef } from "@tanstack/react-table";
 import api from "@/lib/api";
-import type { ArticleListItem, PaginatedResponse } from "@/types";
+import type { ArticleListItem, ArticleTheme, PaginatedResponse } from "@/types";
 import { DataTable } from "@/components/shared/DataTable";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -25,12 +25,20 @@ export default function ArticlesPage() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [themeFilter, setThemeFilter] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState<ArticleListItem | null>(null);
+
+  const { data: themesData } = useQuery<{ data: ArticleTheme[] }>({
+    queryKey: ["article-themes"],
+    queryFn: () => api.get("/admin/article-themes?limit=100&offset=0").then((r) => r.data),
+  });
+  const themes = themesData?.data || [];
 
   const params = new URLSearchParams();
   params.set("limit", String(perPage));
   params.set("offset", String((page - 1) * perPage));
   if (statusFilter !== "all") params.set("status", statusFilter);
+  if (themeFilter !== "all") params.set("theme_slug", themeFilter);
 
   const { data, isLoading, error, refetch } = useQuery<PaginatedResponse<ArticleListItem>>({
     queryKey: ["articles", params.toString()],
@@ -115,7 +123,7 @@ export default function ArticlesPage() {
         <Button asChild><Link href="/admin/content/articles/new"><Plus className="mr-2 h-4 w-4" /> Создать</Link></Button>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <SelectTrigger className="w-44"><SelectValue placeholder="Статус" /></SelectTrigger>
           <SelectContent>
@@ -125,8 +133,17 @@ export default function ArticlesPage() {
             <SelectItem value="archived">Архив</SelectItem>
           </SelectContent>
         </Select>
-        {statusFilter !== "all" && (
-          <Button variant="ghost" size="sm" onClick={() => { setStatusFilter("all"); setPage(1); }}>
+        <Select value={themeFilter} onValueChange={(v) => { setThemeFilter(v); setPage(1); }}>
+          <SelectTrigger className="w-52"><SelectValue placeholder="Тема" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все темы</SelectItem>
+            {themes.map((t) => (
+              <SelectItem key={t.id} value={t.slug}>{t.title}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {(statusFilter !== "all" || themeFilter !== "all") && (
+          <Button variant="ghost" size="sm" onClick={() => { setStatusFilter("all"); setThemeFilter("all"); setPage(1); }}>
             <X className="mr-1 h-3 w-3" /> Сбросить
           </Button>
         )}

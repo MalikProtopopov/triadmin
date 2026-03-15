@@ -106,7 +106,7 @@ export function EventForm({ event }: EventFormProps) {
   }
 
   return (
-    <form ref={formRef} onSubmit={(e) => { e.preventDefault(); submitWithStatus("draft"); }} className="space-y-6">
+    <form ref={formRef} onSubmit={(e) => { e.preventDefault(); submitWithStatus("upcoming"); }} className="space-y-6">
       <Card>
         <CardHeader><CardTitle className="text-base">Основная информация</CardTitle></CardHeader>
         <CardContent className="space-y-4">
@@ -169,13 +169,13 @@ export function EventForm({ event }: EventFormProps) {
       <Separator />
 
       <div className="flex gap-3">
-        <Button type="button" onClick={() => submitWithStatus("draft")} variant="outline" disabled={mutation.isPending}>
+        <Button type="button" onClick={() => submitWithStatus("upcoming")} disabled={mutation.isPending}>
           {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Сохранить черновик
+          Сохранить
         </Button>
-        <Button type="button" onClick={() => submitWithStatus("published")} disabled={mutation.isPending}>
+        <Button type="button" onClick={() => submitWithStatus("ongoing")} variant="outline" disabled={mutation.isPending}>
           {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Опубликовать
+          Отметить как «Идёт»
         </Button>
         <Button
           type="button"

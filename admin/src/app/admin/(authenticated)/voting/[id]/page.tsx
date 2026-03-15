@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
-import type { VotingSession, VotingSessionResults } from "@/types";
+import type { VotingSessionDetail, VotingSessionResults } from "@/types";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ export default function VotingDetailPage() {
   const id = params.id as string;
   const [actionTarget, setActionTarget] = useState<string | null>(null);
 
-  const { data: session, isLoading, error } = useQuery<VotingSession>({
+  const { data: session, isLoading, error } = useQuery<VotingSessionDetail>({
     queryKey: ["voting-session", id],
     queryFn: () => api.get(`/admin/voting/${id}`).then((r) => r.data),
     refetchInterval: (q) => (q.state.data?.status === "active" ? 30_000 : false),
@@ -33,7 +33,7 @@ export default function VotingDetailPage() {
   const { data: results } = useQuery<VotingSessionResults>({
     queryKey: ["voting-results", id],
     queryFn: () => api.get(`/admin/voting/${id}/results`).then((r) => r.data),
-    enabled: !!session && (session.status === "active" || session.status === "finished"),
+    enabled: !!session && (session.status === "active" || session.status === "closed"),
     refetchInterval: () => {
       return session?.status === "active" ? 30_000 : false;
     },
@@ -55,7 +55,7 @@ export default function VotingDetailPage() {
   if (error || (session && typeof session === "object" && !("id" in session)))
     return <ErrorState onRetry={() => queryClient.invalidateQueries({ queryKey: ["voting-session", id] })} />;
 
-  const s = session as VotingSession;
+  const s = session as VotingSessionDetail;
 
   return (
     <div className="space-y-6">
@@ -116,22 +116,17 @@ export default function VotingDetailPage() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {s.status === "draft" && (
-          <Button onClick={() => setActionTarget("active")}>
-            <Play className="mr-2 h-4 w-4" /> Открыть голосование
-          </Button>
-        )}
         {s.status === "active" && (
-          <Button onClick={() => setActionTarget("finished")}>
+          <Button onClick={() => setActionTarget("closed")}>
             <Square className="mr-2 h-4 w-4" /> Закрыть голосование
           </Button>
         )}
-        {(s.status === "active" || s.status === "finished") && (
+        {s.status === "active" && (
           <Button variant="destructive" onClick={() => setActionTarget("cancelled")}>
             <XCircle className="mr-2 h-4 w-4" /> Отменить
           </Button>
         )}
-        {(s.status === "active" || s.status === "finished") && (
+        {(s.status === "active" || s.status === "closed") && (
           <Button variant="outline" asChild>
             <Link href={`/voting/${id}`} target="_blank" rel="noreferrer">
               <ExternalLink className="mr-2 h-4 w-4" /> Посмотреть на сайте
@@ -185,14 +180,12 @@ export default function VotingDetailPage() {
         open={!!actionTarget}
         onOpenChange={(o) => !o && setActionTarget(null)}
         title={
-          actionTarget === "active" ? "Открыть голосование?" :
-          actionTarget === "finished" ? "Закрыть голосование?" :
+          actionTarget === "closed" ? "Закрыть голосование?" :
           "Отменить голосование?"
         }
         description={`Сессия «${s.title}»`}
         confirmLabel={
-          actionTarget === "active" ? "Открыть" :
-          actionTarget === "finished" ? "Закрыть" :
+          actionTarget === "closed" ? "Закрыть" :
           "Отменить"
         }
         variant={actionTarget === "cancelled" ? "destructive" : "default"}
