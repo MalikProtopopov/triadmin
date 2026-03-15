@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { RichTextEditor } from "@/components/shared/RichTextEditor";
 import { FileUpload } from "@/components/shared/FileUpload";
+import { ContentBlocksEditor } from "@/components/shared/ContentBlocksEditor";
 import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useRef, useCallback } from "react";
@@ -129,17 +130,15 @@ export function ArticleForm({ article }: ArticleFormProps) {
       };
 
       const fd = new FormData();
-      fd.append("body", new Blob([JSON.stringify(jsonBody)], { type: "application/json" }));
+      fd.append("body", JSON.stringify(jsonBody));
       if (coverImage) fd.append("cover_image", coverImage);
 
+      const headers = { "Content-Type": undefined as unknown as string };
+
       if (isEditing) {
-        return api.patch(`/admin/articles/${article.id}`, fd, {
-          headers: { "Content-Type": undefined },
-        });
+        return api.patch(`/admin/articles/${article.id}`, fd, { headers });
       }
-      return api.post("/admin/articles", fd, {
-        headers: { "Content-Type": undefined },
-      });
+      return api.post("/admin/articles", fd, { headers });
     },
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["articles"] });
@@ -249,6 +248,10 @@ export function ArticleForm({ article }: ArticleFormProps) {
           )}
         </CardContent>
       </Card>
+
+      {isEditing && article && (
+        <ContentBlocksEditor entityType="article" entityId={article.id} />
+      )}
 
       <Card>
         <CardHeader><CardTitle className="text-base">SEO</CardTitle></CardHeader>
