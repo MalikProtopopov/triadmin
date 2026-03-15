@@ -69,9 +69,13 @@ export function EventForm({ event }: EventFormProps) {
       if (coverImage) fd.append("cover_image", coverImage);
 
       if (isEditing) {
-        return api.patch(`/admin/events/${event.id}`, fd);
+        return api.patch(`/admin/events/${event.id}`, fd, {
+          headers: { "Content-Type": undefined },
+        });
       }
-      return api.post("/admin/events", fd);
+      return api.post("/admin/events", fd, {
+        headers: { "Content-Type": undefined },
+      });
     },
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
