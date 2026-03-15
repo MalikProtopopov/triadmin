@@ -15,6 +15,7 @@ import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -137,9 +138,22 @@ export default function PlansPage() {
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(plan)}>
                     <Pencil className="h-3 w-3" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(plan)}>
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  {plan.is_active ? (
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(plan)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground cursor-not-allowed">
+                          <Trash2 className="h-3 w-3" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Тариф уже деактивирован — его нельзя удалить</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
               </div>
               <p className="text-2xl font-bold">{plan.price.toLocaleString("ru-RU")} ₽</p>
