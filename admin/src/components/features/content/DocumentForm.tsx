@@ -13,9 +13,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { RichTextEditor } from "@/components/shared/RichTextEditor";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { FileUpload } from "@/components/shared/FileUpload";
 import { ContentBlocksEditor } from "@/components/shared/ContentBlocksEditor";
-import { Loader2 } from "lucide-react";
+import { Loader2, FileText, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useRef, useCallback } from "react";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
@@ -55,6 +56,7 @@ export function DocumentForm({ document }: DocumentFormProps) {
 
   const [content, setContent] = useState(document?.content || "");
   const [file, setFile] = useState<File | null>(null);
+  const [deleteFileOpen, setDeleteFileOpen] = useState(false);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(isEditing);
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isDirty } } = useForm<FormData>({
@@ -89,6 +91,22 @@ export function DocumentForm({ document }: DocumentFormProps) {
   useKeyboardShortcuts({
     onSave: () => formRef.current?.requestSubmit(),
     enabled: true,
+  });
+
+  const removeFileMutation = useMutation({
+    mutationFn: async () => {
+      const fd = new FormData();
+      fd.append("remove_file", "true");
+      return api.patch(`/admin/organization-documents/${document!.id}`, fd, {
+        headers: { "Content-Type": undefined as unknown as string },
+      });
+    },
+    onSuccess: () => {
+      setDeleteFileOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["org-documents"] });
+      queryClient.invalidateQueries({ queryKey: ["org-document", document!.id] });
+      toast.success("Файл удалён");
+    },
   });
 
   const mutation = useMutation({
@@ -157,7 +175,7 @@ export function DocumentForm({ document }: DocumentFormProps) {
 
       <Card>
         <CardHeader><CardTitle className="text-base">PDF-файл</CardTitle></CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <FileUpload
             accept={{ "application/pdf": [".pdf"] }}
             maxSize={20 * 1024 * 1024}
@@ -166,8 +184,30 @@ export function DocumentForm({ document }: DocumentFormProps) {
             hint="PDF, до 20 МБ"
           />
           {document?.file_url && !file && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              PDF уже загружен. Выберите новый файл для замены.
+            <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
+              <a
+                href={document.file_url.startsWith("http") ? document.file_url : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/api\/v1\/?$/, "")}/${document.file_url.replace(/^\//, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-primary hover:underline"
+              >
+                <FileText className="h-8 w-8 shrink-0 text-muted-foreground" />
+                <span>PDF</span>
+              </a>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive shrink-0"
+                onClick={() => setDeleteFileOpen(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+          {document?.file_url && file && (
+            <p className="text-xs text-muted-foreground">
+              Будет загружен новый файл взамен текущего.
             </p>
           )}
         </CardContent>
@@ -191,6 +231,17 @@ export function DocumentForm({ document }: DocumentFormProps) {
           Отмена
         </Button>
       </div>
+
+      <ConfirmDialog
+        open={deleteFileOpen}
+        onOpenChange={setDeleteFileOpen}
+        title="Удалить прикреплённый файл?"
+        description="Файл будет удалён безвозвратно. Это действие можно отменить, загрузив новый файл."
+        confirmLabel="Удалить"
+        variant="destructive"
+        isLoading={removeFileMutation.isPending}
+        onConfirm={() => removeFileMutation.mutate()}
+      />
     </form>
   );
 }
