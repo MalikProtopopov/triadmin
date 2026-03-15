@@ -20,9 +20,25 @@ import { GallerySection } from "./GallerySection";
 import { RecordingSection } from "./RecordingSection";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[а-яё]/g, (ch) => {
+      const map: Record<string, string> = {
+        а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "yo", ж: "zh",
+        з: "z", и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o",
+        п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f", х: "kh", ц: "ts",
+        ч: "ch", ш: "sh", щ: "shch", ъ: "", ы: "y", ь: "", э: "e", ю: "yu", я: "ya",
+      };
+      return map[ch] || ch;
+    })
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
 
 const schema = z.object({
   title: z.string().min(3, "Минимум 3 символа"),
@@ -44,8 +60,9 @@ export function EventForm({ event }: EventFormProps) {
   const queryClient = useQueryClient();
   const isEditing = !!event;
   const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(isEditing);
 
-  const { register, handleSubmit, formState: { errors, isDirty } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors, isDirty } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: event
       ? {
@@ -58,6 +75,21 @@ export function EventForm({ event }: EventFormProps) {
         }
       : {},
   });
+
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setValue("title", val, { shouldDirty: true });
+    if (!slugManuallyEdited) {
+      setValue("slug", slugify(val), { shouldDirty: true });
+    }
+  }, [slugManuallyEdited, setValue]);
+
+  const handleSlugChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    setValue("slug", val, { shouldDirty: true });
+    if (val) setSlugManuallyEdited(true);
+    else setSlugManuallyEdited(false);
+  }, [setValue]);
 
   const mutation = useMutation({
     mutationFn: async (params: { data: FormData; status: string }) => {
@@ -110,12 +142,12 @@ export function EventForm({ event }: EventFormProps) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Название *</Label>
-              <Input {...register("title")} />
+              <Input {...register("title", { onChange: handleTitleChange })} />
               {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
             </div>
             <div className="space-y-2">
               <Label>Slug (URL)</Label>
-              <Input {...register("slug")} placeholder="Оставьте пустым для автогенерации" />
+              <Input value={watch("slug") || ""} onChange={handleSlugChange} placeholder="Генерируется из названия" />
               {errors.slug && <p className="text-xs text-destructive">{errors.slug.message}</p>}
               <p className="text-xs text-muted-foreground">Допустимы: a-z, 0-9, дефис</p>
             </div>

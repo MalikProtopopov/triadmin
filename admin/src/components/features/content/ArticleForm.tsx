@@ -18,9 +18,25 @@ import { RichTextEditor } from "@/components/shared/RichTextEditor";
 import { FileUpload } from "@/components/shared/FileUpload";
 import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[а-яё]/g, (ch) => {
+      const map: Record<string, string> = {
+        а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "yo", ж: "zh",
+        з: "z", и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o",
+        п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f", х: "kh", ц: "ts",
+        ч: "ch", ш: "sh", щ: "shch", ъ: "", ы: "y", ь: "", э: "e", ю: "yu", я: "ya",
+      };
+      return map[ch] || ch;
+    })
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
 
 const schema = z.object({
   title: z.string().min(3, "Минимум 3 символа"),
@@ -55,12 +71,14 @@ export function ArticleForm({ article }: ArticleFormProps) {
   );
 
   const { data: themesData } = useQuery<{ data: ThemeOption[] }>({
-    queryKey: ["article-themes"],
-    queryFn: () => api.get("/admin/article-themes").then((r) => r.data),
+    queryKey: ["article-themes-active"],
+    queryFn: () => api.get("/admin/article-themes?is_active=true&limit=100&offset=0").then((r) => r.data),
   });
-  const availableThemes = themesData?.data || [];
+  const activeThemes = themesData?.data || [];
 
-  const { register, handleSubmit, formState: { errors, isDirty } } = useForm<FormData>({
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(isEditing);
+
+  const { register, handleSubmit, setValue, watch, formState: { errors, isDirty } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: article
       ? {
@@ -72,6 +90,21 @@ export function ArticleForm({ article }: ArticleFormProps) {
         }
       : {},
   });
+
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setValue("title", val, { shouldDirty: true });
+    if (!slugManuallyEdited) {
+      setValue("slug", slugify(val), { shouldDirty: true });
+    }
+  }, [slugManuallyEdited, setValue]);
+
+  const handleSlugChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    setValue("slug", val, { shouldDirty: true });
+    if (val) setSlugManuallyEdited(true);
+    else setSlugManuallyEdited(false);
+  }, [setValue]);
 
   const isFormDirty = isDirty || content !== (article?.content || "");
   useUnsavedChangesGuard(isFormDirty);
@@ -138,12 +171,12 @@ export function ArticleForm({ article }: ArticleFormProps) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Заголовок *</Label>
-              <Input {...register("title")} />
+              <Input {...register("title", { onChange: handleTitleChange })} />
               {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
             </div>
             <div className="space-y-2">
               <Label>Slug (URL)</Label>
-              <Input {...register("slug")} placeholder="Оставьте пустым для автогенерации" />
+              <Input value={watch("slug") || ""} onChange={handleSlugChange} placeholder="Генерируется из заголовка" />
               {errors.slug && <p className="text-xs text-destructive">{errors.slug.message}</p>}
               <p className="text-xs text-muted-foreground">Допустимы: a-z, 0-9, дефис</p>
             </div>
@@ -179,11 +212,11 @@ export function ArticleForm({ article }: ArticleFormProps) {
       <Card>
         <CardHeader><CardTitle className="text-base">Темы</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          {availableThemes.length === 0 ? (
+          {activeThemes.length === 0 ? (
             <p className="text-sm text-muted-foreground">Нет доступных тем. Создайте темы в разделе «Темы статей».</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {availableThemes.filter((t) => t.is_active).map((theme) => {
+              {activeThemes.map((theme) => {
                 const selected = selectedThemeIds.includes(theme.id);
                 return (
                   <Badge
@@ -191,6 +224,21 @@ export function ArticleForm({ article }: ArticleFormProps) {
                     variant={selected ? "default" : "outline"}
                     className="cursor-pointer select-none"
                     onClick={() => toggleTheme(theme.id)}
+                  >
+                    {theme.title}
+                    {selected && <X className="ml-1 h-3 w-3" />}
+                  </Badge>
+                );
+              })}
+              {article?.themes?.filter((t) => !activeThemes.some((at) => at.id === t.id)).map((theme) => {
+                const selected = selectedThemeIds.includes(theme.id);
+                return (
+                  <Badge
+                    key={theme.id}
+                    variant={selected ? "default" : "outline"}
+                    className="cursor-pointer select-none opacity-60"
+                    onClick={() => toggleTheme(theme.id)}
+                    title="Тема неактивна"
                   >
                     {theme.title}
                     {selected && <X className="ml-1 h-3 w-3" />}
