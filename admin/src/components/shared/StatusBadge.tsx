@@ -32,7 +32,6 @@ const STATUS_CONFIG: Record<string, { label: string; variant: Variant; className
   upcoming: { label: "Предстоящее", variant: "outline", className: "border-blue-500 text-blue-700 bg-blue-50" },
   ongoing: { label: "Проходит", variant: "outline", className: "border-green-500 text-green-700 bg-green-50" },
   finished: { label: "Завершено", variant: "secondary" },
-  closed: { label: "Завершено", variant: "secondary" },
   hidden: { label: "Скрыта", variant: "secondary" },
   inactive: { label: "Неактивен", variant: "secondary" },
   public: { label: "Публичный", variant: "outline" },
