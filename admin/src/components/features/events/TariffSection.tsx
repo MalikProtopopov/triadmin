@@ -21,8 +21,8 @@ interface TariffFormData {
   description: string;
   conditions: string;
   details: string;
-  price: number;
-  member_price: number;
+  price: number | "";
+  member_price: number | "";
   benefits: string[];
   seats_limit: number | null;
   sort_order: number | "";
@@ -30,7 +30,7 @@ interface TariffFormData {
 
 const EMPTY_TARIFF: TariffFormData = {
   name: "", description: "", conditions: "", details: "",
-  price: 0, member_price: 0, benefits: [], seats_limit: null, sort_order: "",
+  price: "", member_price: "", benefits: [], seats_limit: null, sort_order: "",
 };
 
 interface TariffSectionProps {
@@ -71,6 +71,10 @@ export function TariffSection({ eventId, tariffs, isEditing }: TariffSectionProp
   }
 
   async function save() {
+    if (form.price === "" || form.member_price === "") {
+      toast.error("Укажите цену и цену для резидентов");
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
@@ -190,11 +194,11 @@ export function TariffSection({ eventId, tariffs, isEditing }: TariffSectionProp
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Цена, ₽ *</Label>
-                <Input type="number" min={0} value={form.price} onChange={(e) => setForm((p) => ({ ...p, price: Number(e.target.value) }))} />
+                <Input type="number" min={0} placeholder="0" value={form.price === "" ? "" : form.price} onChange={(e) => setForm((p) => ({ ...p, price: e.target.value === "" ? "" : Number(e.target.value) }))} />
               </div>
               <div className="space-y-2">
                 <Label>Цена для резидентов, ₽ *</Label>
-                <Input type="number" min={0} value={form.member_price} onChange={(e) => setForm((p) => ({ ...p, member_price: Number(e.target.value) }))} />
+                <Input type="number" min={0} placeholder="0" value={form.member_price === "" ? "" : form.member_price} onChange={(e) => setForm((p) => ({ ...p, member_price: e.target.value === "" ? "" : Number(e.target.value) }))} />
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">

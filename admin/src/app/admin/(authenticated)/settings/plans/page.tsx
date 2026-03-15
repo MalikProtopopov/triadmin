@@ -24,8 +24,8 @@ export default function PlansPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [formName, setFormName] = useState("");
   const [formCode, setFormCode] = useState("");
-  const [formPrice, setFormPrice] = useState(0);
-  const [formDuration, setFormDuration] = useState(12);
+  const [formPrice, setFormPrice] = useState<number | "">(0);
+  const [formDuration, setFormDuration] = useState<number | "">(12);
   const [formDescription, setFormDescription] = useState("");
   const [formActive, setFormActive] = useState(true);
   const [formSortOrder, setFormSortOrder] = useState<number | "">(0);
@@ -37,15 +37,21 @@ export default function PlansPage() {
   });
 
   const createPlan = useMutation({
-    mutationFn: () => api.post("/admin/plans", {
-      code: formCode,
-      name: formName,
-      price: formPrice,
-      duration_months: formDuration,
-      description: formDescription || null,
-      is_active: formActive,
-      sort_order: formSortOrder === "" ? 0 : formSortOrder,
-    }),
+    mutationFn: () => {
+      if (formPrice === "" || (typeof formPrice === "number" && formPrice <= 0)) {
+        toast.error("Укажите цену больше 0");
+        return Promise.reject(new Error("validation"));
+      }
+      return api.post("/admin/plans", {
+        code: formCode,
+        name: formName,
+        price: formPrice,
+        duration_months: formDuration === "" || (typeof formDuration === "number" && formDuration < 1) ? 12 : formDuration,
+        description: formDescription || null,
+        is_active: formActive,
+        sort_order: formSortOrder === "" ? 0 : formSortOrder,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plans"] });
       toast.success("Тариф добавлен");
@@ -55,14 +61,20 @@ export default function PlansPage() {
   });
 
   const updatePlan = useMutation({
-    mutationFn: (id: string) => api.patch(`/admin/plans/${id}`, {
-      name: formName,
-      price: formPrice,
-      duration_months: formDuration,
-      description: formDescription || null,
-      is_active: formActive,
-      sort_order: formSortOrder === "" ? 0 : formSortOrder,
-    }),
+    mutationFn: (id: string) => {
+      if (formPrice === "" || (typeof formPrice === "number" && formPrice <= 0)) {
+        toast.error("Укажите цену больше 0");
+        return Promise.reject(new Error("validation"));
+      }
+      return api.patch(`/admin/plans/${id}`, {
+        name: formName,
+        price: formPrice,
+        duration_months: formDuration === "" || (typeof formDuration === "number" && formDuration < 1) ? 12 : formDuration,
+        description: formDescription || null,
+        is_active: formActive,
+        sort_order: formSortOrder === "" ? 0 : formSortOrder,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plans"] });
       toast.success("Тариф обновлён");
@@ -155,11 +167,23 @@ export default function PlansPage() {
             <div className="grid gap-4 grid-cols-2">
               <div className="space-y-2">
                 <Label>Цена, ₽</Label>
-                <Input type="number" value={formPrice} onChange={(e) => setFormPrice(Number(e.target.value))} />
+                <Input
+                  type="number"
+                  min={0}
+                  value={formPrice === "" ? "" : formPrice}
+                  onChange={(e) => setFormPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="0"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Срок, мес.</Label>
-                <Input type="number" value={formDuration} onChange={(e) => setFormDuration(Number(e.target.value))} />
+                <Input
+                  type="number"
+                  min={1}
+                  value={formDuration === "" ? "" : formDuration}
+                  onChange={(e) => setFormDuration(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="12"
+                />
               </div>
             </div>
             <div className="space-y-2">
@@ -201,11 +225,23 @@ export default function PlansPage() {
             <div className="grid gap-4 grid-cols-2">
               <div className="space-y-2">
                 <Label>Цена, ₽</Label>
-                <Input type="number" value={formPrice} onChange={(e) => setFormPrice(Number(e.target.value))} />
+                <Input
+                  type="number"
+                  min={0}
+                  value={formPrice === "" ? "" : formPrice}
+                  onChange={(e) => setFormPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="0"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Срок, мес.</Label>
-                <Input type="number" value={formDuration} onChange={(e) => setFormDuration(Number(e.target.value))} />
+                <Input
+                  type="number"
+                  min={1}
+                  value={formDuration === "" ? "" : formDuration}
+                  onChange={(e) => setFormDuration(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="12"
+                />
               </div>
             </div>
             <div className="space-y-2">
