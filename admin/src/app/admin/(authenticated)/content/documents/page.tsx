@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import api, { postMultipartJsonBody } from "@/lib/api";
+import api from "@/lib/api";
 import type { OrgDocument } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -103,8 +103,15 @@ export default function OrgDocumentsPage() {
 
   const createDoc = useMutation({
     mutationFn: () => {
-      const jsonBody = { title: formTitle, ...(formSlug.trim() ? { slug: formSlug.trim() } : {}), content: formContent || null, is_active: true };
-      return postMultipartJsonBody("POST", "/admin/organization-documents", jsonBody, { file: formFile });
+      const fd = new FormData();
+      fd.append("title", formTitle);
+      fd.append("is_active", "true");
+      if (formSlug.trim()) fd.append("slug", formSlug.trim());
+      if (formContent) fd.append("content", formContent);
+      if (formFile) fd.append("file", formFile);
+      return api.post("/admin/organization-documents", fd, {
+        headers: { "Content-Type": undefined },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["org-documents"] });
@@ -116,8 +123,14 @@ export default function OrgDocumentsPage() {
 
   const updateDoc = useMutation({
     mutationFn: (id: string) => {
-      const jsonBody = { title: formTitle, ...(formSlug.trim() ? { slug: formSlug.trim() } : {}), content: formContent || null };
-      return postMultipartJsonBody("PATCH", `/admin/organization-documents/${id}`, jsonBody, { file: formFile });
+      const fd = new FormData();
+      fd.append("title", formTitle);
+      if (formSlug.trim()) fd.append("slug", formSlug.trim());
+      if (formContent) fd.append("content", formContent);
+      if (formFile) fd.append("file", formFile);
+      return api.patch(`/admin/organization-documents/${id}`, fd, {
+        headers: { "Content-Type": undefined },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["org-documents"] });
@@ -129,7 +142,11 @@ export default function OrgDocumentsPage() {
 
   const toggleDoc = useMutation({
     mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) => {
-      return postMultipartJsonBody("PATCH", `/admin/organization-documents/${id}`, { is_active });
+      const fd = new FormData();
+      fd.append("is_active", String(is_active));
+      return api.patch(`/admin/organization-documents/${id}`, fd, {
+        headers: { "Content-Type": undefined },
+      });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["org-documents"] }),
   });
