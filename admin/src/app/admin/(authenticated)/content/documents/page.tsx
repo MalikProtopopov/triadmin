@@ -129,10 +129,7 @@ export default function OrgDocumentsPage() {
 
   const toggleDoc = useMutation({
     mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const fd = buildFormData({ is_active }, null);
-      return api.patch(`/admin/organization-documents/${id}`, fd, {
-        headers: { "Content-Type": undefined },
-      });
+      return postMultipartJsonBody("PATCH", `/admin/organization-documents/${id}`, { is_active });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["org-documents"] }),
   });
