@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { RichTextEditor } from "@/components/shared/RichTextEditor";
 import { FileUpload } from "@/components/shared/FileUpload";
+import { ContentBlocksEditor } from "@/components/shared/ContentBlocksEditor";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useRef, useCallback } from "react";
@@ -149,6 +150,10 @@ export function DocumentForm({ document }: DocumentFormProps) {
           <RichTextEditor content={content} onChange={setContent} />
         </CardContent>
       </Card>
+
+      {isEditing && document && (
+        <ContentBlocksEditor entityType="organization_document" entityId={document.id} />
+      )}
 
       <Card>
         <CardHeader><CardTitle className="text-base">PDF-файл</CardTitle></CardHeader>

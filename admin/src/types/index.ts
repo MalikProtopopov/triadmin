@@ -235,6 +235,7 @@ export interface OrgDocument {
   content?: string | null;
   updated_by?: string | null;
   created_at?: string;
+  content_blocks?: ContentBlock[];
 }
 
 export interface ContentBlock {
