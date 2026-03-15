@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
+import api, { postMultipartJsonBody } from "@/lib/api";
 import type { ArticleDetail } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -129,16 +129,9 @@ export function ArticleForm({ article }: ArticleFormProps) {
         theme_ids: selectedThemeIds.length > 0 ? selectedThemeIds : [],
       };
 
-      const fd = new FormData();
-      fd.append("body", JSON.stringify(jsonBody));
-      if (coverImage) fd.append("cover_image", coverImage);
-
-      const headers = { "Content-Type": undefined as unknown as string };
-
-      if (isEditing) {
-        return api.patch(`/admin/articles/${article.id}`, fd, { headers });
-      }
-      return api.post("/admin/articles", fd, { headers });
+      const url = isEditing ? `/admin/articles/${article.id}` : "/admin/articles";
+      const method = isEditing ? "PATCH" : "POST";
+      return postMultipartJsonBody(method, url, jsonBody, { cover_image: coverImage });
     },
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["articles"] });

@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import api from "@/lib/api";
+import api, { postMultipartJsonBody } from "@/lib/api";
 import type { OrgDocument } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,22 +101,10 @@ export default function OrgDocumentsPage() {
     queryFn: () => api.get("/admin/organization-documents").then((r) => r.data.data || r.data),
   });
 
-  function buildFormData(jsonBody: Record<string, unknown>, file: File | null): globalThis.FormData {
-    const fd = new globalThis.FormData();
-    fd.append("body", JSON.stringify(jsonBody));
-    if (file) fd.append("file", file);
-    return fd;
-  }
-
   const createDoc = useMutation({
     mutationFn: () => {
-      const fd = buildFormData(
-        { title: formTitle, ...(formSlug.trim() ? { slug: formSlug.trim() } : {}), content: formContent || null, is_active: true },
-        formFile
-      );
-      return api.post("/admin/organization-documents", fd, {
-        headers: { "Content-Type": undefined },
-      });
+      const jsonBody = { title: formTitle, ...(formSlug.trim() ? { slug: formSlug.trim() } : {}), content: formContent || null, is_active: true };
+      return postMultipartJsonBody("POST", "/admin/organization-documents", jsonBody, { file: formFile });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["org-documents"] });
@@ -128,13 +116,8 @@ export default function OrgDocumentsPage() {
 
   const updateDoc = useMutation({
     mutationFn: (id: string) => {
-      const fd = buildFormData(
-        { title: formTitle, ...(formSlug.trim() ? { slug: formSlug.trim() } : {}), content: formContent || null },
-        formFile
-      );
-      return api.patch(`/admin/organization-documents/${id}`, fd, {
-        headers: { "Content-Type": undefined },
-      });
+      const jsonBody = { title: formTitle, ...(formSlug.trim() ? { slug: formSlug.trim() } : {}), content: formContent || null };
+      return postMultipartJsonBody("PATCH", `/admin/organization-documents/${id}`, jsonBody, { file: formFile });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["org-documents"] });
