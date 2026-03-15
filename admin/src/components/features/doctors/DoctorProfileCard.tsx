@@ -48,6 +48,7 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
               <div>
                 <h2 className="text-xl font-bold">{fullName}</h2>
                 <p className="text-sm text-muted-foreground">{doctor.email}</p>
+                {doctor.slug && <p className="text-xs text-muted-foreground font-mono">/doctors/{doctor.slug}</p>}
                 <div className="flex gap-2 mt-1 flex-wrap">
                   <StatusBadge status={doctor.moderation_status} />
                   {doctor.subscription?.status && <StatusBadge status={doctor.subscription.status} />}

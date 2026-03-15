@@ -90,6 +90,7 @@ export default function OrgDocumentsPage() {
   const [deleteTarget, setDeleteTarget] = useState<OrgDocument | null>(null);
 
   const [formTitle, setFormTitle] = useState("");
+  const [formSlug, setFormSlug] = useState("");
   const [formContent, setFormContent] = useState("");
   const [formFile, setFormFile] = useState<File | null>(null);
   const initialTitleRef = useRef("");
@@ -110,7 +111,7 @@ export default function OrgDocumentsPage() {
   const createDoc = useMutation({
     mutationFn: () => {
       const fd = buildFormData(
-        { title: formTitle, content: formContent || null, is_active: true },
+        { title: formTitle, ...(formSlug.trim() ? { slug: formSlug.trim() } : {}), content: formContent || null, is_active: true },
         formFile
       );
       return api.post("/admin/organization-documents", fd, {
@@ -128,7 +129,7 @@ export default function OrgDocumentsPage() {
   const updateDoc = useMutation({
     mutationFn: (id: string) => {
       const fd = buildFormData(
-        { title: formTitle, content: formContent || null },
+        { title: formTitle, ...(formSlug.trim() ? { slug: formSlug.trim() } : {}), content: formContent || null },
         formFile
       );
       return api.patch(`/admin/organization-documents/${id}`, fd, {
@@ -189,6 +190,7 @@ export default function OrgDocumentsPage() {
 
   function resetForm() {
     setFormTitle("");
+    setFormSlug("");
     setFormContent("");
     setFormFile(null);
   }
@@ -207,6 +209,7 @@ export default function OrgDocumentsPage() {
 
   function openEdit(doc: OrgDocument) {
     setFormTitle(doc.title);
+    setFormSlug(doc.slug || "");
     setFormContent(doc.content || "");
     setFormFile(null);
     initialTitleRef.current = doc.title;
@@ -263,9 +266,20 @@ export default function OrgDocumentsPage() {
             <DialogTitle>{editDoc ? "Редактировать документ" : "Новый документ"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Название *</Label>
-              <Input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Название *</Label>
+                <Input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Slug (URL)</Label>
+                <Input
+                  value={formSlug}
+                  onChange={(e) => setFormSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                  placeholder="Оставьте пустым для автогенерации"
+                />
+                <p className="text-xs text-muted-foreground">Допустимы: a-z, 0-9, дефис</p>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Содержимое</Label>

@@ -26,6 +26,7 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 const schema = z.object({
   title: z.string().min(3, "Минимум 3 символа"),
+  slug: z.string().regex(/^[a-z0-9-]*$/, "Только a-z, 0-9, дефис").max(500).optional().or(z.literal("")),
   description: z.string().optional(),
   event_date: z.string().min(1, "Укажите дату"),
   event_end_date: z.string().optional(),
@@ -49,6 +50,7 @@ export function EventForm({ event }: EventFormProps) {
     defaultValues: event
       ? {
           title: event.title,
+          slug: event.slug || "",
           description: event.description || "",
           event_date: event.event_date.slice(0, 16),
           event_end_date: event.event_end_date?.slice(0, 16) || "",
@@ -63,6 +65,7 @@ export function EventForm({ event }: EventFormProps) {
       fd.append("title", params.data.title);
       fd.append("event_date", new Date(params.data.event_date).toISOString());
       fd.append("status", params.status);
+      if (params.data.slug) fd.append("slug", params.data.slug);
       if (params.data.description) fd.append("description", params.data.description);
       if (params.data.event_end_date) fd.append("event_end_date", new Date(params.data.event_end_date).toISOString());
       if (params.data.location) fd.append("location", params.data.location);
@@ -109,6 +112,12 @@ export function EventForm({ event }: EventFormProps) {
               <Label>Название *</Label>
               <Input {...register("title")} />
               {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>Slug (URL)</Label>
+              <Input {...register("slug")} placeholder="Оставьте пустым для автогенерации" />
+              {errors.slug && <p className="text-xs text-destructive">{errors.slug.message}</p>}
+              <p className="text-xs text-muted-foreground">Допустимы: a-z, 0-9, дефис</p>
             </div>
           </div>
           <div className="space-y-2">

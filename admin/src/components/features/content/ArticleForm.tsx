@@ -24,6 +24,7 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 const schema = z.object({
   title: z.string().min(3, "Минимум 3 символа"),
+  slug: z.string().regex(/^[a-z0-9-]*$/, "Только a-z, 0-9, дефис").max(500).optional().or(z.literal("")),
   excerpt: z.string().optional(),
   seo_title: z.string().optional(),
   seo_description: z.string().optional(),
@@ -64,6 +65,7 @@ export function ArticleForm({ article }: ArticleFormProps) {
     defaultValues: article
       ? {
           title: article.title,
+          slug: article.slug || "",
           excerpt: article.excerpt || "",
           seo_title: article.seo_title || "",
           seo_description: article.seo_description || "",
@@ -84,6 +86,7 @@ export function ArticleForm({ article }: ArticleFormProps) {
     mutationFn: async (params: { data: FormData; status: string }) => {
       const jsonBody: Record<string, unknown> = {
         title: params.data.title,
+        ...(params.data.slug ? { slug: params.data.slug } : {}),
         content,
         status: params.status,
         excerpt: params.data.excerpt || null,
@@ -132,10 +135,18 @@ export function ArticleForm({ article }: ArticleFormProps) {
       <Card>
         <CardHeader><CardTitle className="text-base">Основная информация</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Заголовок *</Label>
-            <Input {...register("title")} />
-            {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Заголовок *</Label>
+              <Input {...register("title")} />
+              {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>Slug (URL)</Label>
+              <Input {...register("slug")} placeholder="Оставьте пустым для автогенерации" />
+              {errors.slug && <p className="text-xs text-destructive">{errors.slug.message}</p>}
+              <p className="text-xs text-muted-foreground">Допустимы: a-z, 0-9, дефис</p>
+            </div>
           </div>
           <div className="space-y-2">
             <Label>Краткое описание</Label>

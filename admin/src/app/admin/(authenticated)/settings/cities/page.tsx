@@ -26,6 +26,7 @@ export default function CitiesPage() {
   const [inlineName, setInlineName] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<City | null>(null);
   const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
 
   const { data: cities, isLoading, error, refetch } = useQuery<City[]>({
     queryKey: ["admin-cities"],
@@ -33,7 +34,7 @@ export default function CitiesPage() {
   });
 
   const createCity = useMutation({
-    mutationFn: () => api.post("/admin/cities", { name }),
+    mutationFn: () => api.post("/admin/cities", { name, ...(slug.trim() ? { slug: slug.trim() } : {}) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-cities"] });
       toast.success("Город добавлен");
@@ -42,7 +43,8 @@ export default function CitiesPage() {
   });
 
   const updateCity = useMutation({
-    mutationFn: ({ id, name: n }: { id: string; name: string }) => api.patch(`/admin/cities/${id}`, { name: n }),
+    mutationFn: ({ id, name: n, slug: s }: { id: string; name: string; slug?: string }) =>
+      api.patch(`/admin/cities/${id}`, { name: n, ...(s?.trim() ? { slug: s.trim() } : {}) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-cities"] });
       toast.success("Город обновлён");
@@ -69,12 +71,14 @@ export default function CitiesPage() {
   function openNew() {
     setEditing(null);
     setName("");
+    setSlug("");
     setDialogOpen(true);
   }
 
   function openEdit(city: City) {
     setEditing(city);
     setName(city.name);
+    setSlug(city.slug || "");
     setDialogOpen(true);
   }
 
@@ -82,6 +86,7 @@ export default function CitiesPage() {
     setDialogOpen(false);
     setEditing(null);
     setName("");
+    setSlug("");
   }
 
   function startInlineEdit(city: City) {
@@ -162,15 +167,26 @@ export default function CitiesPage() {
       <Dialog open={dialogOpen} onOpenChange={(o) => !o && closeDialog()}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editing ? "Редактировать город" : "Новый город"}</DialogTitle></DialogHeader>
-          <div className="space-y-2">
-            <Label>Название</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Название</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Slug (URL)</Label>
+              <Input
+                value={slug}
+                onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                placeholder="Оставьте пустым для автогенерации"
+              />
+              <p className="text-xs text-muted-foreground">Допустимы: a-z, 0-9, дефис</p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeDialog}>Отмена</Button>
             <Button
               disabled={!name.trim() || createCity.isPending || updateCity.isPending}
-              onClick={() => editing ? updateCity.mutate({ id: editing.id, name }) : createCity.mutate()}
+              onClick={() => editing ? updateCity.mutate({ id: editing.id, name, slug }) : createCity.mutate()}
             >
               {(createCity.isPending || updateCity.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {editing ? "Сохранить" : "Создать"}
