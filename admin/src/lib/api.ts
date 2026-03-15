@@ -1,6 +1,12 @@
 import axios, { type InternalAxiosRequestConfig } from "axios";
 import { toast } from "sonner";
 
+declare module "axios" {
+  interface AxiosRequestConfig {
+    skipErrorToast?: boolean;
+  }
+}
+
 let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null) {
@@ -72,7 +78,7 @@ api.interceptors.response.use(
           document.cookie = "admin_auth=; path=/; max-age=0";
         }
         if (typeof window !== "undefined" && !window.location.pathname.startsWith("/admin/login")) {
-          window.location.href = "/admin/login";
+          window.location.href = "/admin/login?reason=session_expired";
         }
         return Promise.reject(refreshError);
       } finally {

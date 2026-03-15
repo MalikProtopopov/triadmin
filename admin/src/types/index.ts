@@ -22,6 +22,17 @@ export interface User {
   onboarding_completed: boolean;
   moderation_status: ModerationStatus | null;
   last_login_at: string | null;
+  /** From GET /auth/me */
+  sidebar_sections?: string[];
+  is_staff?: boolean;
+}
+
+export interface AuthMeResponse {
+  id: string;
+  email: string;
+  role: "admin" | "manager" | "accountant";
+  is_staff: boolean;
+  sidebar_sections: string[];
 }
 
 export interface City {

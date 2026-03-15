@@ -13,63 +13,83 @@ import {
   Bell,
   UserCog,
   LogOut,
+  FileSpreadsheet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRole } from "@/hooks/useRole";
 import { useAuth } from "@/hooks/useAuth";
+import { useSidebarSections } from "@/hooks/useSidebarSections";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+
+interface NavChild {
+  label: string;
+  href: string;
+  section: string;
+}
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
-  roles?: string[];
-  children?: { label: string; href: string; roles?: string[] }[];
+  section: string;
+  children?: NavChild[];
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Дашборд", href: "/admin/dashboard", icon: <LayoutDashboard className="h-4 w-4" />, roles: ["admin", "manager"] },
-  { label: "Врачи", href: "/admin/doctors", icon: <Users className="h-4 w-4" />, roles: ["admin", "manager"] },
-  { label: "Мероприятия", href: "/admin/events", icon: <CalendarDays className="h-4 w-4" />, roles: ["admin", "manager"] },
-  { label: "Платежи", href: "/admin/payments", icon: <CreditCard className="h-4 w-4" />, roles: ["admin", "manager", "accountant"] },
+  { label: "Дашборд", href: "/admin/dashboard", icon: <LayoutDashboard className="h-4 w-4" />, section: "dashboard" },
+  { label: "Врачи", href: "/admin/doctors", icon: <Users className="h-4 w-4" />, section: "doctors" },
+  { label: "Импорт из Excel", href: "/admin/doctors/import", icon: <FileSpreadsheet className="h-4 w-4" />, section: "doctors_import" },
+  { label: "Мероприятия", href: "/admin/events", icon: <CalendarDays className="h-4 w-4" />, section: "events" },
+  { label: "Платежи", href: "/admin/payments", icon: <CreditCard className="h-4 w-4" />, section: "payments" },
   {
     label: "Контент",
     href: "/admin/content",
     icon: <FileText className="h-4 w-4" />,
-    roles: ["admin", "manager"],
+    section: "content",
     children: [
-      { label: "Статьи", href: "/admin/content/articles" },
-      { label: "Темы статей", href: "/admin/content/article-themes" },
-      { label: "Документы", href: "/admin/content/documents" },
+      { label: "Статьи", href: "/admin/content/articles", section: "content_articles" },
+      { label: "Темы статей", href: "/admin/content/article-themes", section: "content_themes" },
+      { label: "Документы", href: "/admin/content/documents", section: "content_documents" },
     ],
   },
   {
     label: "Настройки",
     href: "/admin/settings",
     icon: <Settings className="h-4 w-4" />,
-    roles: ["admin"],
+    section: "settings",
     children: [
-      { label: "Общие", href: "/admin/settings" },
-      { label: "Города", href: "/admin/settings/cities", roles: ["admin", "manager"] },
-      { label: "Тарифы", href: "/admin/settings/plans" },
-      { label: "SEO", href: "/admin/settings/seo" },
+      { label: "Общие", href: "/admin/settings", section: "settings_general" },
+      { label: "Города", href: "/admin/settings/cities", section: "settings_cities" },
+      { label: "Тарифы", href: "/admin/settings/plans", section: "settings_plans" },
+      { label: "SEO", href: "/admin/settings/seo", section: "settings_seo" },
     ],
   },
-  { label: "Голосование", href: "/admin/voting", icon: <Vote className="h-4 w-4" />, roles: ["admin", "manager"] },
-  { label: "Уведомления", href: "/admin/notifications", icon: <Bell className="h-4 w-4" />, roles: ["admin", "manager"] },
-  { label: "Пользователи портала", href: "/admin/portal-users", icon: <Users className="h-4 w-4" />, roles: ["admin", "manager", "accountant"] },
-  { label: "Администраторы", href: "/admin/users", icon: <UserCog className="h-4 w-4" />, roles: ["admin"] },
+  { label: "Голосование", href: "/admin/voting", icon: <Vote className="h-4 w-4" />, section: "voting" },
+  { label: "Уведомления", href: "/admin/notifications", icon: <Bell className="h-4 w-4" />, section: "notifications" },
+  { label: "Пользователи портала", href: "/admin/portal-users", icon: <Users className="h-4 w-4" />, section: "portal_users" },
+  { label: "Администраторы", href: "/admin/users", icon: <UserCog className="h-4 w-4" />, section: "administrators" },
 ];
+
+function isSectionVisible(sections: string[], section: string): boolean {
+  return sections.includes(section);
+}
+
+function isNavItemVisible(item: NavItem, sections: string[]): boolean {
+  if (isSectionVisible(sections, item.section)) return true;
+  if (item.children) {
+    return item.children.some((c) => isSectionVisible(sections, c.section));
+  }
+  return false;
+}
 
 export function Sidebar({ mobile }: { mobile?: boolean } = {}) {
   const pathname = usePathname();
-  const { hasAnyRole } = useRole();
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
+  const sections = useSidebarSections();
 
-  const visibleItems = NAV_ITEMS.filter((item) => !item.roles || hasAnyRole(item.roles));
+  const visibleItems = NAV_ITEMS.filter((item) => isNavItemVisible(item, sections));
 
   return (
     <aside className={cn(
@@ -85,7 +105,7 @@ export function Sidebar({ mobile }: { mobile?: boolean } = {}) {
         <nav className="space-y-0.5 px-2">
           {visibleItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-            const visibleChildren = item.children?.filter((c) => !c.roles || hasAnyRole(c.roles));
+            const visibleChildren = item.children?.filter((c) => isSectionVisible(sections, c.section));
 
             return (
               <div key={item.href}>

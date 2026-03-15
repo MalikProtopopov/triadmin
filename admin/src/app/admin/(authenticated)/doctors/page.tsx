@@ -21,6 +21,7 @@ import { CreateDoctorModal } from "@/components/features/doctors/CreateDoctorMod
 import { useDebounce } from "@/hooks/useDebounce";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useRole } from "@/hooks/useRole";
+import { useSidebarSections } from "@/hooks/useSidebarSections";
 import { format } from "date-fns";
 import { totalPages } from "@/lib/pagination";
 import { Suspense } from "react";
@@ -103,6 +104,8 @@ function DoctorsListContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isAdmin } = useRole();
+  const sidebarSections = useSidebarSections();
+  const canImportDoctors = sidebarSections.includes("doctors_import");
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [status, setStatus] = useState(searchParams.get("status") || "all");
@@ -174,16 +177,16 @@ function DoctorsListContent() {
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Врачи</h1>
-        {isAdmin && (
-          <div className="flex gap-2">
-            <CreateDoctorModal onCreated={(profileId) => router.push(`/admin/doctors/${profileId}`)} />
+        <div className="flex gap-2">
+          {isAdmin && <CreateDoctorModal onCreated={(profileId) => router.push(`/admin/doctors/${profileId}`)} />}
+          {canImportDoctors && (
             <Button asChild>
-              <Link href="/admin/portal-users/import">
+              <Link href="/admin/doctors/import">
                 <Upload className="mr-2 h-4 w-4" /> Импорт из Excel
               </Link>
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Filters */}
