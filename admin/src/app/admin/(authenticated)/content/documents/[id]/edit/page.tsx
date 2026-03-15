@@ -15,17 +15,11 @@ export default function EditDocumentPage() {
   const { data, isLoading, error, refetch } = useQuery<OrgDocument>({
     queryKey: ["org-document", id],
     queryFn: async () => {
-      try {
-        const res = await api.get(`/admin/organization-documents/${id}`);
-        return res.data as OrgDocument;
-      } catch {
-        // fallback: load from list
-        const res = await api.get("/admin/organization-documents");
-        const list: OrgDocument[] = res.data.data || res.data;
-        const doc = list.find((d) => d.id === id);
-        if (!doc) throw new Error("Документ не найден");
-        return doc;
-      }
+      const res = await api.get("/admin/organization-documents");
+      const list: OrgDocument[] = Array.isArray(res.data) ? res.data : res.data.data || res.data;
+      const doc = list.find((d) => d.id === id);
+      if (!doc) throw new Error("Документ не найден");
+      return doc;
     },
   });
 

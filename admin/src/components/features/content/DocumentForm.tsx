@@ -16,7 +16,7 @@ import { RichTextEditor } from "@/components/shared/RichTextEditor";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { FileUpload } from "@/components/shared/FileUpload";
 import { ContentBlocksEditor } from "@/components/shared/ContentBlocksEditor";
-import { Loader2, FileText, Trash2 } from "lucide-react";
+import { Loader2, FileText, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useRef, useCallback } from "react";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
@@ -185,24 +185,39 @@ export function DocumentForm({ document }: DocumentFormProps) {
           />
           {document?.file_url && !file && (
             <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/30">
-              <a
-                href={document.file_url.startsWith("http") ? document.file_url : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/api\/v1\/?$/, "")}/${document.file_url.replace(/^\//, "")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-primary hover:underline"
-              >
-                <FileText className="h-8 w-8 shrink-0 text-muted-foreground" />
-                <span>PDF</span>
-              </a>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-destructive shrink-0"
-                onClick={() => setDeleteFileOpen(true)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <FileText className="h-8 w-8 shrink-0 text-muted-foreground" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">Загруженный файл</p>
+                <p className="text-xs text-muted-foreground truncate">PDF-документ</p>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  asChild
+                >
+                  <a
+                    href={document.file_url.startsWith("http") ? document.file_url : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/api\/v1\/?$/, "")}/${document.file_url.replace(/^\//, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Просмотреть
+                  </a>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setDeleteFileOpen(true)}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                  Удалить
+                </Button>
+              </div>
             </div>
           )}
           {document?.file_url && file && (
