@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   DndContext,
@@ -19,32 +19,27 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import Link from "next/link";
 import api from "@/lib/api";
 import type { OrgDocument } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { RichTextEditor } from "@/components/shared/RichTextEditor";
-import { FileUpload } from "@/components/shared/FileUpload";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Plus, Pencil, Trash2, GripVertical, FileText, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, Pencil, Trash2, GripVertical, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 function SortableDocCard({
   doc,
-  onEdit,
   onDelete,
   onToggle,
 }: {
   doc: OrgDocument;
-  onEdit: (d: OrgDocument) => void;
   onDelete: (d: OrgDocument) => void;
   onToggle: (id: string, v: boolean) => void;
 }) {
@@ -59,7 +54,7 @@ function SortableDocCard({
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm truncate">{doc.title}</p>
           <div className="flex items-center gap-2">
-            <p className="text-xs text-muted-foreground">{doc.slug}</p>
+            <p className="text-xs text-muted-foreground font-mono">{doc.slug}</p>
             {doc.file_url && (
               <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 <FileText className="h-3 w-3" /> PDF
@@ -72,8 +67,10 @@ function SortableDocCard({
           onCheckedChange={(v) => onToggle(doc.id, v)}
           className="shrink-0"
         />
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(doc)}>
-          <Pencil className="h-3 w-3" />
+        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+          <Link href={`/admin/content/documents/${doc.id}/edit`}>
+            <Pencil className="h-3 w-3" />
+          </Link>
         </Button>
         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => onDelete(doc)}>
           <Trash2 className="h-3 w-3" />
@@ -84,60 +81,13 @@ function SortableDocCard({
 }
 
 export default function OrgDocumentsPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
-  const [editDoc, setEditDoc] = useState<OrgDocument | null>(null);
-  const [newOpen, setNewOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<OrgDocument | null>(null);
-
-  const [formTitle, setFormTitle] = useState("");
-  const [formSlug, setFormSlug] = useState("");
-  const [formContent, setFormContent] = useState("");
-  const [formFile, setFormFile] = useState<File | null>(null);
-  const initialTitleRef = useRef("");
-  const initialContentRef = useRef("");
 
   const { data: docs, isLoading, error, refetch } = useQuery<OrgDocument[]>({
     queryKey: ["org-documents"],
     queryFn: () => api.get("/admin/organization-documents").then((r) => r.data.data || r.data),
-  });
-
-  const createDoc = useMutation({
-    mutationFn: () => {
-      const fd = new FormData();
-      fd.append("title", formTitle);
-      fd.append("is_active", "true");
-      if (formSlug.trim()) fd.append("slug", formSlug.trim());
-      if (formContent) fd.append("content", formContent);
-      if (formFile) fd.append("file", formFile);
-      return api.post("/admin/organization-documents", fd, {
-        headers: { "Content-Type": undefined },
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["org-documents"] });
-      toast.success("Документ создан");
-      setNewOpen(false);
-      resetForm();
-    },
-  });
-
-  const updateDoc = useMutation({
-    mutationFn: (id: string) => {
-      const fd = new FormData();
-      fd.append("title", formTitle);
-      if (formSlug.trim()) fd.append("slug", formSlug.trim());
-      if (formContent) fd.append("content", formContent);
-      if (formFile) fd.append("file", formFile);
-      return api.patch(`/admin/organization-documents/${id}`, fd, {
-        headers: { "Content-Type": undefined },
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["org-documents"] });
-      toast.success("Документ обновлён");
-      setEditDoc(null);
-      resetForm();
-    },
   });
 
   const toggleDoc = useMutation({
@@ -185,59 +135,25 @@ export default function OrgDocumentsPage() {
     reorderDocs.mutate(reordered.map((d, i) => ({ id: d.id, sort_order: i })));
   }
 
-  function resetForm() {
-    setFormTitle("");
-    setFormSlug("");
-    setFormContent("");
-    setFormFile(null);
-  }
-
-  function isModalDirty() {
-    return formTitle !== initialTitleRef.current || formContent !== initialContentRef.current || !!formFile;
-  }
-
-  function handleModalClose() {
-    if (isModalDirty()) {
-      if (!window.confirm("У вас есть несохранённые изменения. Закрыть без сохранения?")) return;
-    }
-    setNewOpen(false);
-    setEditDoc(null);
-  }
-
-  function openEdit(doc: OrgDocument) {
-    setFormTitle(doc.title);
-    setFormSlug(doc.slug || "");
-    setFormContent(doc.content || "");
-    setFormFile(null);
-    initialTitleRef.current = doc.title;
-    initialContentRef.current = doc.content || "";
-    setEditDoc(doc);
-  }
-
-  function openNew() {
-    resetForm();
-    initialTitleRef.current = "";
-    initialContentRef.current = "";
-    setNewOpen(true);
-  }
-
   if (isLoading) return <TableSkeleton rows={5} cols={3} />;
   if (error) return <ErrorState onRetry={refetch} />;
 
   const sorted = [...(docs || [])].sort((a, b) => a.sort_order - b.sort_order);
-
-  const hasContentOrFile = !!formContent.trim() || !!formFile || !!(editDoc?.file_url);
 
   return (
     <div className="space-y-4">
       <Breadcrumbs items={[{ label: "Контент" }, { label: "Документы организации" }]} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Документы организации</h1>
-        <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" /> Создать</Button>
+        <Button asChild>
+          <Link href="/admin/content/documents/new">
+            <Plus className="mr-2 h-4 w-4" /> Создать
+          </Link>
+        </Button>
       </div>
 
       {sorted.length === 0 ? (
-        <EmptyState title="Нет документов" actionLabel="Создать документ" onAction={openNew} />
+        <EmptyState title="Нет документов" actionLabel="Создать документ" onAction={() => router.push("/admin/content/documents/new")} />
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={sorted.map((d) => d.id)} strategy={verticalListSortingStrategy}>
@@ -246,7 +162,6 @@ export default function OrgDocumentsPage() {
                 <SortableDocCard
                   key={doc.id}
                   doc={doc}
-                  onEdit={openEdit}
                   onDelete={setDeleteTarget}
                   onToggle={(id, v) => toggleDoc.mutate({ id, is_active: v })}
                 />
@@ -255,62 +170,6 @@ export default function OrgDocumentsPage() {
           </SortableContext>
         </DndContext>
       )}
-
-      {/* New/Edit dialog */}
-      <Dialog open={newOpen || !!editDoc} onOpenChange={(o) => { if (!o) handleModalClose(); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editDoc ? "Редактировать документ" : "Новый документ"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Название *</Label>
-                <Input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Slug (URL)</Label>
-                <Input
-                  value={formSlug}
-                  onChange={(e) => setFormSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                  placeholder="Оставьте пустым для автогенерации"
-                />
-                <p className="text-xs text-muted-foreground">Допустимы: a-z, 0-9, дефис</p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Содержимое</Label>
-              <RichTextEditor content={formContent} onChange={setFormContent} />
-            </div>
-            <div className="space-y-2">
-              <Label>PDF файл</Label>
-              <FileUpload
-                accept={{ "application/pdf": [".pdf"] }}
-                maxSize={20 * 1024 * 1024}
-                value={formFile}
-                onChange={(f) => setFormFile(f as File | null)}
-                hint="PDF, до 20 МБ"
-              />
-              {editDoc?.file_url && !formFile && (
-                <p className="text-xs text-muted-foreground">PDF уже загружен. Выберите новый файл для замены.</p>
-              )}
-            </div>
-            {!hasContentOrFile && (
-              <p className="text-xs text-destructive">Укажите содержимое или загрузите PDF файл</p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleModalClose}>Отмена</Button>
-            <Button
-              disabled={!formTitle.trim() || !hasContentOrFile || createDoc.isPending || updateDoc.isPending}
-              onClick={() => editDoc ? updateDoc.mutate(editDoc.id) : createDoc.mutate()}
-            >
-              {(createDoc.isPending || updateDoc.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {editDoc ? "Сохранить" : "Создать"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <ConfirmDialog
         open={!!deleteTarget}
