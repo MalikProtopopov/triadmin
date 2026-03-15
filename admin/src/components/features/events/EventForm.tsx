@@ -59,27 +59,19 @@ export function EventForm({ event }: EventFormProps) {
 
   const mutation = useMutation({
     mutationFn: async (params: { data: FormData; status: string }) => {
-      const jsonBody: Record<string, unknown> = {
-        title: params.data.title,
-        event_date: new Date(params.data.event_date).toISOString(),
-        status: params.status,
-        description: params.data.description || null,
-        event_end_date: params.data.event_end_date ? new Date(params.data.event_end_date).toISOString() : null,
-        location: params.data.location || null,
-      };
-
       const fd = new FormData();
-      fd.append("body", new Blob([JSON.stringify(jsonBody)], { type: "application/json" }));
+      fd.append("title", params.data.title);
+      fd.append("event_date", new Date(params.data.event_date).toISOString());
+      fd.append("status", params.status);
+      if (params.data.description) fd.append("description", params.data.description);
+      if (params.data.event_end_date) fd.append("event_end_date", new Date(params.data.event_end_date).toISOString());
+      if (params.data.location) fd.append("location", params.data.location);
       if (coverImage) fd.append("cover_image", coverImage);
 
       if (isEditing) {
-        return api.patch(`/admin/events/${event.id}`, fd, {
-          headers: { "Content-Type": undefined },
-        });
+        return api.patch(`/admin/events/${event.id}`, fd);
       }
-      return api.post("/admin/events", fd, {
-        headers: { "Content-Type": undefined },
-      });
+      return api.post("/admin/events", fd);
     },
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
