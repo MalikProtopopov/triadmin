@@ -92,6 +92,8 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    const skipErrorToast = (originalRequest as { skipErrorToast?: boolean }).skipErrorToast;
+
     if (status === 403 && errorCode === "ACCOUNT_DEACTIVATED") {
       toast.error("Аккаунт деактивирован. Обратитесь к администратору.");
       setAccessToken(null);
@@ -102,21 +104,21 @@ api.interceptors.response.use(
         window.location.href = "/admin/login";
       }
     } else if (status === 403) {
-      toast.error(serverMessage || "Нет доступа");
+      if (!skipErrorToast) toast.error(serverMessage || "Нет доступа");
     } else if (status === 404) {
-      toast.error(serverMessage || "Ресурс не найден");
+      if (!skipErrorToast) toast.error(serverMessage || "Ресурс не найден");
     } else if (status === 409) {
-      toast.error(serverMessage || "Конфликт данных");
+      if (!skipErrorToast) toast.error(serverMessage || "Конфликт данных");
     } else if (status === 422) {
-      toast.error(serverMessage || "Ошибка валидации");
+      if (!skipErrorToast) toast.error(serverMessage || "Ошибка валидации");
     } else if (status === 429) {
-      toast.error("Слишком много запросов. Подождите немного.");
+      if (!skipErrorToast) toast.error("Слишком много запросов. Подождите немного.");
     } else if (status && status >= 500) {
-      toast.error("Внутренняя ошибка сервера. Попробуйте позже.");
+      if (!skipErrorToast) toast.error("Внутренняя ошибка сервера. Попробуйте позже.");
     } else if (status) {
-      toast.error(serverMessage || "Ошибка запроса");
+      if (!skipErrorToast) toast.error(serverMessage || "Ошибка запроса");
     } else {
-      toast.error("Ошибка соединения. Проверьте подключение к интернету.");
+      if (!skipErrorToast) toast.error("Ошибка соединения. Проверьте подключение к интернету.");
     }
 
     return Promise.reject(error);

@@ -27,35 +27,50 @@ const schema = z.object({
   path: ["confirmPassword"],
 });
 
+function InvalidLinkBlock() {
+  return (
+    <div className="text-center space-y-4">
+      <p className="text-sm text-destructive">Ссылка недействительна или устарела</p>
+      <Button asChild variant="outline">
+        <Link href="/admin/forgot-password">Запросить новую ссылку</Link>
+      </Button>
+    </div>
+  );
+}
+
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorState, setErrorState] = useState<"expired" | "validation" | null>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
   });
 
   if (!token) {
-    return (
-      <div className="text-center space-y-4">
-        <p className="text-sm text-destructive">Ссылка недействительна или устарела</p>
-        <Button asChild variant="outline">
-          <Link href="/admin/forgot-password">Запросить новую ссылку</Link>
-        </Button>
-      </div>
-    );
+    return <InvalidLinkBlock />;
+  }
+
+  if (errorState === "expired") {
+    return <InvalidLinkBlock />;
   }
 
   async function onSubmit(data: z.infer<typeof schema>) {
+    setErrorState(null);
     setIsSubmitting(true);
     try {
       await resetPassword(token!, data.password);
       toast.success("Пароль успешно изменён");
       router.replace("/admin/login");
-    } catch {
-      // handled by interceptor
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 404) {
+        setErrorState("expired");
+      } else if (status === 422) {
+        setErrorState("validation");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -73,6 +88,9 @@ function ResetPasswordForm() {
         <Input id="confirmPassword" type="password" {...register("confirmPassword")} />
         {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword.message}</p>}
       </div>
+      {errorState === "validation" && (
+        <p className="text-xs text-destructive">Пароль слишком короткий</p>
+      )}
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Сохранить пароль

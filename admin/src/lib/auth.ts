@@ -66,7 +66,11 @@ export async function forgotPassword(email: string): Promise<void> {
 }
 
 export async function resetPassword(token: string, password: string): Promise<void> {
-  await api.post("/auth/reset-password", { token, new_password: password });
+  await api.post(
+    "/auth/reset-password",
+    { token, new_password: password },
+    { skipErrorToast: true } as { skipErrorToast?: boolean }
+  );
 }
 
 const ADMIN_ROLES = ["admin", "manager", "accountant"];

@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
           {sent ? (
             <div className="text-center space-y-4">
               <p className="text-sm">
-                Если аккаунт существует, письмо с инструкцией отправлено на <strong>{sentEmail}</strong>
+                Если ваш email зарегистрирован, вы получите письмо с инструкцией
               </p>
               <Button asChild variant="outline" className="w-full">
                 <Link href="/admin/login">Вернуться ко входу</Link>
@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
               </div>
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Отправить ссылку
+                Отправить инструкцию
               </Button>
               <div className="text-center">
                 <Link href="/admin/login" className="text-sm text-muted-foreground hover:underline">
