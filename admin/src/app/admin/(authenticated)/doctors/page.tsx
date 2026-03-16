@@ -193,8 +193,10 @@ function DoctorsListContent() {
           <SelectContent>
             <SelectItem value="all">Все статусы</SelectItem>
             <SelectItem value="pending_review">На модерации</SelectItem>
-            <SelectItem value="approved">Одобрен</SelectItem>
-            <SelectItem value="rejected">Отклонён</SelectItem>
+            <SelectItem value="approved">Одобрены</SelectItem>
+            <SelectItem value="active">Активны</SelectItem>
+            <SelectItem value="deactivated">Деактивированы</SelectItem>
+            <SelectItem value="rejected">Отклонённые</SelectItem>
           </SelectContent>
         </Select>
         <Select value={subscriptionStatus} onValueChange={(v) => { setSubscriptionStatus(v); setPage(1); }}>

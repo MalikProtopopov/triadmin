@@ -184,7 +184,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <Link
-              href="/admin/doctors?status=pending"
+              href="/admin/doctors?status=pending_review"
               className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
             >
               <Clock className="h-5 w-5 text-yellow-500" />

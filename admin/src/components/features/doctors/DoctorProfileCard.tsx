@@ -13,6 +13,17 @@ import { ContentBlocksEditor } from "@/components/shared/ContentBlocksEditor";
 import { DoctorModals } from "./DoctorModals";
 import { format } from "date-fns";
 
+const DOCUMENT_TYPE_LABELS: Record<string, string> = {
+  medical_diploma: "Медицинский диплом",
+  speciality_certificate: "Сертификат специалиста",
+  passport: "Паспорт",
+  other: "Прочее",
+};
+
+function documentTypeLabel(type: string): string {
+  return DOCUMENT_TYPE_LABELS[type] || type;
+}
+
 interface DoctorProfileCardProps {
   doctor: DoctorDetail;
   onInvalidate: () => void;
@@ -153,7 +164,7 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
                       <TableBody>
                         {doctor.documents.map((doc) => (
                           <TableRow key={doc.id}>
-                            <TableCell>{doc.document_type}</TableCell>
+                            <TableCell>{documentTypeLabel(doc.document_type)}</TableCell>
                             <TableCell>
                               {doc.file_url ? (
                                 <a href={doc.file_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{doc.original_filename}</a>

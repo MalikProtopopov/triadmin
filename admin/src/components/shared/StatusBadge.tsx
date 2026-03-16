@@ -37,6 +37,8 @@ const STATUS_CONFIG: Record<string, { label: string; variant: Variant; className
   public: { label: "Публичный", variant: "outline" },
   members_only: { label: "Для членов", variant: "outline", className: "border-blue-500 text-blue-700 bg-blue-50" },
   participants_only: { label: "Для участников", variant: "outline", className: "border-purple-500 text-purple-700 bg-purple-50" },
+  approve: { label: "Одобрено", variant: "outline", className: "border-green-500 text-green-700 bg-green-50" },
+  reject: { label: "Отклонено", variant: "destructive" },
 };
 
 interface StatusBadgeProps {

@@ -28,10 +28,10 @@ export default function DoctorDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumbs items={[{ label: "Пользователи", href: "/admin/portal-users" }, { label: fullName }]} />
+      <Breadcrumbs items={[{ label: "Врачи", href: "/admin/doctors" }, { label: fullName }]} />
 
       <Button asChild variant="ghost" size="sm">
-        <Link href="/admin/portal-users"><ArrowLeft className="mr-1 h-4 w-4" /> Назад к списку</Link>
+        <Link href="/admin/doctors"><ArrowLeft className="mr-1 h-4 w-4" /> Назад к списку</Link>
       </Button>
 
       <DoctorProfileCard
