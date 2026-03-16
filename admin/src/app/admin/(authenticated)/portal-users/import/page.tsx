@@ -52,8 +52,8 @@ export default function DoctorsImportPage() {
 
   return (
     <div className="space-y-6">
-      <Breadcrumbs items={[{ label: "Пользователи", href: "/admin/portal-users" }, { label: "Импорт врачей" }]} />
-      <h1 className="text-2xl font-bold">Импорт врачей из Excel</h1>
+      <Breadcrumbs items={[{ label: "Пользователи портала", href: "/admin/portal-users" }, { label: "Импорт пользователей" }]} />
+      <h1 className="text-2xl font-bold">Импорт пользователей из Excel</h1>
 
       <Card>
         <CardHeader>

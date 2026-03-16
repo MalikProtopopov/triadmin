@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { SortableHeader } from "@/components/shared/SortableHeader";
 import { Eye, X, Upload } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useRole } from "@/hooks/useRole";
+import { useSidebarSections } from "@/hooks/useSidebarSections";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -109,7 +109,8 @@ function getColumns(
 
 function PortalUsersListContent() {
   const searchParams = useSearchParams();
-  const { isAdmin } = useRole();
+  const sidebarSections = useSidebarSections();
+  const canImportUsers = sidebarSections.includes("doctors_import");
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
@@ -154,14 +155,14 @@ function PortalUsersListContent() {
 
   return (
     <div className="space-y-4">
-      <Breadcrumbs items={[{ label: "Пользователи" }]} />
+      <Breadcrumbs items={[{ label: "Пользователи портала", href: "/admin/portal-users" }, { label: "Пользователи" }]} />
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Пользователи</h1>
-        {isAdmin && (
+        {canImportUsers && (
           <Button asChild>
             <Link href="/admin/portal-users/import">
-              <Upload className="mr-2 h-4 w-4" /> Импорт врачей
+              <Upload className="mr-2 h-4 w-4" /> Импорт пользователей
             </Link>
           </Button>
         )}

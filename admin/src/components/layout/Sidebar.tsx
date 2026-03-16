@@ -13,7 +13,6 @@ import {
   Bell,
   UserCog,
   LogOut,
-  FileSpreadsheet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,7 +38,6 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Дашборд", href: "/admin/dashboard", icon: <LayoutDashboard className="h-4 w-4" />, section: "dashboard" },
   { label: "Врачи", href: "/admin/doctors", icon: <Users className="h-4 w-4" />, section: "doctors" },
-  { label: "Импорт из Excel", href: "/admin/doctors/import", icon: <FileSpreadsheet className="h-4 w-4" />, section: "doctors_import" },
   { label: "Мероприятия", href: "/admin/events", icon: <CalendarDays className="h-4 w-4" />, section: "events" },
   { label: "Платежи", href: "/admin/payments", icon: <CreditCard className="h-4 w-4" />, section: "payments" },
   {
@@ -67,7 +65,16 @@ const NAV_ITEMS: NavItem[] = [
   },
   { label: "Голосование", href: "/admin/voting", icon: <Vote className="h-4 w-4" />, section: "voting" },
   { label: "Уведомления", href: "/admin/notifications", icon: <Bell className="h-4 w-4" />, section: "notifications" },
-  { label: "Пользователи портала", href: "/admin/portal-users", icon: <Users className="h-4 w-4" />, section: "portal_users" },
+  {
+    label: "Пользователи портала",
+    href: "/admin/portal-users",
+    icon: <Users className="h-4 w-4" />,
+    section: "portal_users",
+    children: [
+      { label: "Пользователи", href: "/admin/portal-users", section: "portal_users" },
+      { label: "Импорт пользователей", href: "/admin/portal-users/import", section: "doctors_import" },
+    ],
+  },
   { label: "Администраторы", href: "/admin/users", icon: <UserCog className="h-4 w-4" />, section: "administrators" },
 ];
 

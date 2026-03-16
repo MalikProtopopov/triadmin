@@ -45,7 +45,7 @@ export function getSidebarSectionsForRole(role: string): string[] {
 const DEFAULT_REDIRECT_ORDER: { section: string; href: string }[] = [
   { section: "dashboard", href: "/admin/dashboard" },
   { section: "doctors", href: "/admin/doctors" },
-  { section: "doctors_import", href: "/admin/doctors/import" },
+  { section: "doctors_import", href: "/admin/portal-users/import" },
   { section: "events", href: "/admin/events" },
   { section: "payments", href: "/admin/payments" },
   { section: "content", href: "/admin/content" },

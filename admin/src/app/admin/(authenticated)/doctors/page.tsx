@@ -16,12 +16,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SortableHeader } from "@/components/shared/SortableHeader";
-import { Eye, Upload, X, FileEdit, GraduationCap } from "lucide-react";
+import { Eye, X, FileEdit, GraduationCap } from "lucide-react";
 import { CreateDoctorModal } from "@/components/features/doctors/CreateDoctorModal";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useRole } from "@/hooks/useRole";
-import { useSidebarSections } from "@/hooks/useSidebarSections";
 import { format } from "date-fns";
 import { totalPages } from "@/lib/pagination";
 import { Suspense } from "react";
@@ -104,8 +103,6 @@ function DoctorsListContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isAdmin } = useRole();
-  const sidebarSections = useSidebarSections();
-  const canImportDoctors = sidebarSections.includes("doctors_import");
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [status, setStatus] = useState(searchParams.get("status") || "all");
@@ -177,16 +174,7 @@ function DoctorsListContent() {
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Врачи</h1>
-        <div className="flex gap-2">
-          {isAdmin && <CreateDoctorModal onCreated={(profileId) => router.push(`/admin/doctors/${profileId}`)} />}
-          {canImportDoctors && (
-            <Button asChild>
-              <Link href="/admin/doctors/import">
-                <Upload className="mr-2 h-4 w-4" /> Импорт из Excel
-              </Link>
-            </Button>
-          )}
-        </div>
+        {isAdmin && <CreateDoctorModal onCreated={(profileId) => router.push(`/admin/doctors/${profileId}`)} />}
       </div>
 
       {/* Filters */}
