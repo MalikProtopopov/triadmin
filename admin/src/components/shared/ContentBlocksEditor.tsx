@@ -138,11 +138,13 @@ function SortableBlockCard({
 interface ContentBlocksEditorProps {
   entityType: string;
   entityId: string;
+  initialBlocks?: ContentBlock[];
 }
 
-export function ContentBlocksEditor({ entityType, entityId }: ContentBlocksEditorProps) {
+export function ContentBlocksEditor({ entityType, entityId, initialBlocks }: ContentBlocksEditorProps) {
   const queryClient = useQueryClient();
   const queryKey = ["content-blocks", entityType, entityId];
+  const hasInitialData = initialBlocks !== undefined;
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingBlock, setEditingBlock] = useState<ContentBlock | null>(null);
@@ -153,6 +155,8 @@ export function ContentBlocksEditor({ entityType, entityId }: ContentBlocksEdito
     queryKey,
     queryFn: () =>
       api.get(`/admin/content-blocks?entity_type=${entityType}&entity_id=${entityId}`).then((r) => r.data.data || r.data),
+    enabled: !hasInitialData,
+    initialData: hasInitialData ? initialBlocks : undefined,
   });
 
   const sortedBlocks = [...blocks].sort((a, b) => a.sort_order - b.sort_order);
@@ -162,6 +166,7 @@ export function ContentBlocksEditor({ entityType, entityId }: ContentBlocksEdito
       api.post("/admin/content-blocks", { ...data, entity_type: entityType, entity_id: entityId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
+      if (hasInitialData) queryClient.refetchQueries({ queryKey });
       toast.success("Блок добавлен");
       setModalOpen(false);
     },
@@ -172,6 +177,7 @@ export function ContentBlocksEditor({ entityType, entityId }: ContentBlocksEdito
       api.patch(`/admin/content-blocks/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
+      if (hasInitialData) queryClient.refetchQueries({ queryKey });
       toast.success("Блок обновлён");
       setModalOpen(false);
       setEditingBlock(null);
@@ -182,6 +188,7 @@ export function ContentBlocksEditor({ entityType, entityId }: ContentBlocksEdito
     mutationFn: (id: string) => api.delete(`/admin/content-blocks/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
+      if (hasInitialData) queryClient.refetchQueries({ queryKey });
       toast.success("Блок удалён");
       setDeleteTarget(null);
     },
@@ -190,7 +197,10 @@ export function ContentBlocksEditor({ entityType, entityId }: ContentBlocksEdito
   const reorderBlocks = useMutation({
     mutationFn: (items: { id: string; sort_order: number }[]) =>
       api.post("/admin/content-blocks/reorder", { items }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      if (hasInitialData) queryClient.refetchQueries({ queryKey });
+    },
   });
 
   const sensors = useSensors(

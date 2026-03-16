@@ -170,7 +170,7 @@ export function DocumentForm({ document }: DocumentFormProps) {
       </Card>
 
       {isEditing && document && (
-        <ContentBlocksEditor entityType="organization_document" entityId={document.id} />
+        <ContentBlocksEditor entityType="organization_document" entityId={document.id} initialBlocks={document?.content_blocks} />
       )}
 
       <Card>

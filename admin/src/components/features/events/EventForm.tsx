@@ -198,7 +198,7 @@ export function EventForm({ event }: EventFormProps) {
       )}
 
       {isEditing && event && (
-        <ContentBlocksEditor entityType="event" entityId={event.id} />
+        <ContentBlocksEditor entityType="event" entityId={event.id} initialBlocks={event?.content_blocks} />
       )}
 
       <Separator />

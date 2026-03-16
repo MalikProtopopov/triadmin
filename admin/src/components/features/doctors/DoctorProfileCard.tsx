@@ -217,7 +217,7 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
             </TabsContent>
 
             <TabsContent value="content">
-              <ContentBlocksEditor entityType="doctor_profile" entityId={doctor.id} />
+              <ContentBlocksEditor entityType="doctor_profile" entityId={doctor.id} initialBlocks={doctor.content_blocks} />
             </TabsContent>
 
             <TabsContent value="payments">

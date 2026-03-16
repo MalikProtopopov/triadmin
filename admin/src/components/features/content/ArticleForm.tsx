@@ -246,7 +246,7 @@ export function ArticleForm({ article }: ArticleFormProps) {
       </Card>
 
       {isEditing && article && (
-        <ContentBlocksEditor entityType="article" entityId={article.id} />
+        <ContentBlocksEditor entityType="article" entityId={article.id} initialBlocks={article?.content_blocks} />
       )}
 
       <Card>

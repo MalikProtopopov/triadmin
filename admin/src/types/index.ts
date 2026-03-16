@@ -100,6 +100,7 @@ export interface DoctorDetail extends Omit<DoctorListItem, "subscription"> {
   payments: PaymentItem[];
   pending_draft: DoctorDraft | null;
   moderation_history: ModerationHistoryItem[];
+  content_blocks?: ContentBlock[];
 }
 
 export interface DoctorDraft {
@@ -220,6 +221,7 @@ export interface EventDetail {
   tariffs: EventTariff[];
   galleries?: EventGalleryNested[];
   recordings?: EventRecording[];
+  content_blocks?: ContentBlock[];
 }
 
 export interface ArticleListItem {
@@ -448,6 +450,7 @@ export interface ArticleDetail {
   themes: { id: string; slug: string; title: string }[];
   created_at: string;
   updated_at: string | null;
+  content_blocks?: ContentBlock[];
 }
 
 export interface EventGalleryPhoto {
