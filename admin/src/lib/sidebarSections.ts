@@ -40,3 +40,33 @@ export const ROLE_SIDEBAR_SECTIONS: Record<string, string[]> = {
 export function getSidebarSectionsForRole(role: string): string[] {
   return ROLE_SIDEBAR_SECTIONS[role] ?? [];
 }
+
+/** Порядок секций для редиректа на первый доступный раздел */
+const DEFAULT_REDIRECT_ORDER: { section: string; href: string }[] = [
+  { section: "dashboard", href: "/admin/dashboard" },
+  { section: "doctors", href: "/admin/doctors" },
+  { section: "doctors_import", href: "/admin/doctors/import" },
+  { section: "events", href: "/admin/events" },
+  { section: "payments", href: "/admin/payments" },
+  { section: "content", href: "/admin/content" },
+  { section: "content_articles", href: "/admin/content/articles" },
+  { section: "content_themes", href: "/admin/content/article-themes" },
+  { section: "content_documents", href: "/admin/content/documents" },
+  { section: "settings", href: "/admin/settings" },
+  { section: "settings_general", href: "/admin/settings" },
+  { section: "settings_cities", href: "/admin/settings/cities" },
+  { section: "settings_plans", href: "/admin/settings/plans" },
+  { section: "settings_seo", href: "/admin/settings/seo" },
+  { section: "voting", href: "/admin/voting" },
+  { section: "notifications", href: "/admin/notifications" },
+  { section: "portal_users", href: "/admin/portal-users" },
+  { section: "administrators", href: "/admin/users" },
+];
+
+/** Возвращает URL первого доступного раздела для редиректа после входа */
+export function getDefaultAdminUrl(sections: string[]): string {
+  for (const { section, href } of DEFAULT_REDIRECT_ORDER) {
+    if (sections.includes(section)) return href;
+  }
+  return "/admin/dashboard";
+}

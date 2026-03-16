@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { hasAdminAccess } from "@/lib/auth";
+import { getDefaultAdminUrl, getSidebarSectionsForRole } from "@/lib/sidebarSections";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -47,7 +48,8 @@ export default function LoginPage() {
         toast.error("Нет доступа к админпанели");
         return;
       }
-      router.replace("/admin/dashboard");
+      const sections = user.sidebar_sections?.length ? user.sidebar_sections : getSidebarSectionsForRole(user.roles[0] ?? "");
+      router.replace(getDefaultAdminUrl(sections));
     } catch {
       // error toast handled by api interceptor
     } finally {
