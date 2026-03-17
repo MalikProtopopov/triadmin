@@ -1,6 +1,41 @@
 
 # Рекомендации по деплою для нейронки
 
+## Make-команды (локально и на сервере)
+
+В корне проекта есть `Makefile`. После `git pull` можно использовать:
+
+| Команда | Описание |
+|---------|----------|
+| `make test-up` | Собрать и запустить админку (test), `docker-compose.test.yml` + `.env.test` |
+| `make test-down` | Остановить админку (test) |
+| `make test-logs` | Логи контейнера (test) |
+| `make test-restart` | Пересобрать и перезапустить админку (test), `--force-recreate` |
+| `make prod-up` | Собрать и запустить админку (prod), `docker-compose.prod.yml` + `.env.prod` |
+| `make prod-down` | Остановить админку (prod) |
+| `make prod-logs` | Логи контейнера (prod) |
+| `make prod-restart` | Пересобрать и перезапустить админку (prod) |
+| `make clean` | Очистить неиспользуемые Docker-образы |
+
+**Деплой обновлений на сервере:**
+```bash
+ssh root@147.45.146.38
+cd /root/troh_admin
+git pull
+make test-restart    # для тестовой админки (NEXT_PUBLIC_API_URL=trihoback.mediann.dev)
+# или
+make prod-restart    # для продовой админки (NEXT_PUBLIC_API_URL=api.trihologia.ru)
+```
+
+Для полной пересборки без кеша (если что-то сломалось):
+```bash
+docker stop troh-admin-test 2>/dev/null; docker rm troh-admin-test 2>/dev/null
+docker compose -f docker-compose.test.yml --env-file .env.test build --no-cache admin
+docker compose -f docker-compose.test.yml --env-file .env.test up -d admin
+```
+
+---
+
 ## Кратко, что сообщать
 
 **При обновлении админки:**
@@ -37,6 +72,12 @@
 ```bash
 cd /root/troh_admin
 git pull
+make test-restart     # обычно достаточно (test)
+# или make prod-restart  # для prod
+```
+
+Полная пересборка без кеша (если make не помогает):
+```bash
 docker stop troh-admin-test 2>/dev/null; docker rm troh-admin-test 2>/dev/null
 docker compose -f docker-compose.test.yml --env-file .env.test build --no-cache admin
 docker compose -f docker-compose.test.yml --env-file .env.test up -d admin
@@ -85,11 +126,9 @@ docker compose -f docker-compose.test.yml --env-file frontend/.env.test up -d fr
 Деплой [админки | клиентского фронта] на сервер 147.45.146.38.
 
 1. SSH: root@147.45.146.38
-2. [Админка: cd /root/troh_admin, git pull] или [Клиент: cd /opt/triclient, git pull]
-3. Остановить и удалить только целевой контейнер (troh-admin-test или triclient-frontend-1)
-4. Собрать образ без кеша: docker compose -f docker-compose.test.yml --env-file [.env.test | frontend/.env.test] build --no-cache [admin | frontend]
-5. Запустить: docker compose ... up -d [admin | frontend]
-6. НЕ трогать другой проект.
+2. Админка: cd /root/troh_admin && git pull && make test-restart (или make prod-restart)
+3. Клиент: cd /opt/triclient && git pull && [manual docker compose — нет make в triclient]
+4. НЕ трогать другой проект.
 ```
 
 ---
