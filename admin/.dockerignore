@@ -5,4 +5,9 @@ node_modules
 !.env.example
 *.md
 .cursor
+**/__tests__
+**/*.test.*
+**/*.spec.*
+*.log
 .DS_Store
+coverage
