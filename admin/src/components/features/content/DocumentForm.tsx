@@ -198,7 +198,7 @@ export function DocumentForm({ document }: DocumentFormProps) {
                   asChild
                 >
                   <a
-                    href={document.file_url.startsWith("http") ? document.file_url : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/api\/v1\/?$/, "")}/${document.file_url.replace(/^\//, "")}`}
+                    href={document.file_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5"
