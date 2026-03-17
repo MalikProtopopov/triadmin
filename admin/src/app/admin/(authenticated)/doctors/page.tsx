@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SortableHeader } from "@/components/shared/SortableHeader";
-import { Eye, X, FileEdit, GraduationCap } from "lucide-react";
+import { Eye, X, FileEdit, GraduationCap, ImageIcon } from "lucide-react";
 import { CreateDoctorModal } from "@/components/features/doctors/CreateDoctorModal";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -73,12 +73,23 @@ function getColumns(sorting: SortingState, onSort: (id: string) => void): Column
   {
     accessorKey: "has_pending_changes",
     header: "Правки",
-    cell: ({ row }) =>
-      row.original.has_pending_changes ? (
-        <span title="Есть ожидающие правки профиля" className="flex items-center gap-1 text-amber-600">
+    cell: ({ row }) => {
+      const d = row.original;
+      if (!d.has_pending_changes) return null;
+      const title = d.has_photo_in_draft
+        ? "Есть ожидающие правки профиля, включая новое фото"
+        : "Есть ожидающие правки профиля";
+      return (
+        <span title={title} className="flex items-center gap-1 text-amber-600">
           <FileEdit className="h-4 w-4" />
+          {d.has_photo_in_draft && (
+            <span className="inline-flex items-center gap-0.5 text-xs" title="Новое фото">
+              <ImageIcon className="h-3.5 w-3.5" /> фото
+            </span>
+          )}
         </span>
-      ) : null,
+      );
+    },
   },
   {
     accessorKey: "created_at",

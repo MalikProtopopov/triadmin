@@ -57,6 +57,7 @@ export interface DoctorListItem {
   moderation_status: ModerationStatus;
   has_medical_diploma: boolean;
   has_pending_changes: boolean;
+  has_photo_in_draft?: boolean;
   subscription: {
     id?: string | null;
     status: string | null;

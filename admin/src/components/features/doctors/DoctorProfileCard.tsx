@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import type { DoctorDetail } from "@/types";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Check, X, Power, PowerOff, Mail, Bell, FileWarning } from "lucide-react";
+import { Check, X, Power, PowerOff, Mail, Bell, FileWarning, ImageIcon } from "lucide-react";
+import { buildMediaUrl } from "@/lib/media";
 import { ContentBlocksEditor } from "@/components/shared/ContentBlocksEditor";
 import { DoctorModals } from "./DoctorModals";
 import { format } from "date-fns";
@@ -22,6 +23,21 @@ const DOCUMENT_TYPE_LABELS: Record<string, string> = {
 
 function documentTypeLabel(type: string): string {
   return DOCUMENT_TYPE_LABELS[type] || type;
+}
+
+const DRAFT_FIELD_LABELS: Record<string, string> = {
+  photo_url: "Фото",
+  bio: "Биография",
+  public_email: "Email (публ.)",
+  public_phone: "Телефон (публ.)",
+  city: "Город",
+  clinic_name: "Клиника",
+  specialization: "Специализация",
+  academic_degree: "Степень",
+};
+
+function draftFieldLabel(field: string): string {
+  return DRAFT_FIELD_LABELS[field] || field;
 }
 
 interface DoctorProfileCardProps {
@@ -102,7 +118,14 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
               <CardContent className="space-y-2 text-sm">
                 {isPending && !hasDraft && <p>Первичная заявка (анкета и документы)</p>}
                 {hasDraft && doctor.pending_draft && doctor.pending_draft.changed_fields.length > 0 && (
-                  <p><strong>Правки профиля:</strong> {doctor.pending_draft.changed_fields.join(", ")}</p>
+                  <p className="flex items-center gap-1.5 flex-wrap">
+                    <strong>Правки профиля:</strong>
+                    {doctor.pending_draft.changed_fields.map((f) => (
+                      <span key={f} className="inline-flex items-center gap-1">
+                        {f === "photo_url" ? <><ImageIcon className="h-3.5 w-3.5 text-amber-600" /> Фото</> : draftFieldLabel(f)}
+                      </span>
+                    )).reduce<React.ReactNode[]>((acc, el, i) => (i > 0 ? [...acc, ", ", el] : [el]), [])}
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -188,6 +211,18 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
                 <Card>
                   <CardHeader><CardTitle className="text-base">Текущий профиль</CardTitle></CardHeader>
                   <CardContent>
+                    {hasDraft && doctor.pending_draft?.changed_fields.includes("photo_url") && (
+                      <dl className="mb-4 pb-4 border-b space-y-1">
+                        <dt className="text-muted-foreground text-sm">Фото</dt>
+                        <dd>
+                          {doctor.photo_url ? (
+                            <img src={doctor.photo_url} alt="Текущее фото" className="h-24 w-24 rounded-lg object-cover" />
+                          ) : (
+                            <span className="text-muted-foreground italic text-sm">Нет фото</span>
+                          )}
+                        </dd>
+                      </dl>
+                    )}
                     <dl className="space-y-2 text-sm">
                       {[
                         ["Bio", doctor.bio],
@@ -213,9 +248,24 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
                       <dl className="space-y-2 text-sm">
                         {doctor.pending_draft.changed_fields.map((field) => {
                           const value = doctor.pending_draft!.changes[field];
+                          if (field === "photo_url") {
+                            const newPhotoUrl = buildMediaUrl(typeof value === "string" ? value : null);
+                            return (
+                              <div key={field} className="bg-yellow-50 dark:bg-yellow-950/30 -mx-2 px-2 py-2 rounded">
+                                <dt className="text-muted-foreground mb-1">{draftFieldLabel(field)}</dt>
+                                <dd>
+                                  {newPhotoUrl ? (
+                                    <img src={newPhotoUrl} alt="Новое фото" className="h-24 w-24 rounded-lg object-cover" />
+                                  ) : (
+                                    <span className="text-muted-foreground italic">пусто</span>
+                                  )}
+                                </dd>
+                              </div>
+                            );
+                          }
                           return (
                             <div key={field} className="bg-yellow-50 dark:bg-yellow-950/30 -mx-2 px-2 py-1 rounded">
-                              <dt className="text-muted-foreground">{field}</dt>
+                              <dt className="text-muted-foreground">{draftFieldLabel(field)}</dt>
                               <dd>{value != null ? String(value) : <span className="text-muted-foreground italic">пусто</span>}</dd>
                             </div>
                           );
