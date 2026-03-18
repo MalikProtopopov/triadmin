@@ -219,7 +219,8 @@ function NotificationsContent() {
               <Select value={sendType} onValueChange={setSendType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="manual_reminder">Напоминание</SelectItem>
+                  <SelectItem value="reminder">Напоминание</SelectItem>
+                  <SelectItem value="manual_reminder">Ручное напоминание</SelectItem>
                   <SelectItem value="custom">Произвольное</SelectItem>
                 </SelectContent>
               </Select>

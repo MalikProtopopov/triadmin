@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-// NOTE: GET /api/v1/specializations does not exist on backend yet.
-// specialization_ids field is omitted until the endpoint is implemented.
+// TODO: Check if GET /api/v1/specializations endpoint is available.
+// If so, add a multi-select for specialization_ids to the doctor creation form.
 import { toast } from "sonner";
 import { UserPlus, Loader2, Copy, ChevronDown, ChevronUp } from "lucide-react";
 import api from "@/lib/api";

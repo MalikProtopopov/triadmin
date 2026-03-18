@@ -1,9 +1,9 @@
 export type Role = "admin" | "manager" | "accountant" | "doctor" | "non_doctor";
 
 export type ModerationStatus = "pending_review" | "approved" | "rejected";
-export type DoctorStatus = "pending_review" | "approved" | "rejected" | "active" | "deactivated";
-export type SubscriptionStatus = "active" | "expired" | "expiring_soon" | "never";
-export type PaymentStatus = "pending" | "succeeded" | "failed" | "refunded" | "partially_refunded";
+export type DoctorStatus = "pending_review" | "approved" | "rejected" | "active" | "deactivated" | "inactive";
+export type SubscriptionStatus = "active" | "expired" | "expiring_soon" | "never" | "pending_payment";
+export type PaymentStatus = "pending" | "succeeded" | "failed" | "refunded" | "partially_refunded" | "canceled";
 export type ProductType = "entry_fee" | "subscription" | "event";
 export type EventStatus = "upcoming" | "ongoing" | "finished" | "cancelled";
 export type ArticleStatus = "draft" | "published" | "archived";
@@ -271,6 +271,8 @@ export interface ContentBlock {
   updated_at: string;
 }
 
+export type PlanType = "entry_fee" | "subscription";
+
 export interface Plan {
   id: string;
   code: string;
@@ -280,6 +282,7 @@ export interface Plan {
   duration_months: number;
   is_active: boolean;
   sort_order: number;
+  plan_type: PlanType;
 }
 
 export interface PageSeo {

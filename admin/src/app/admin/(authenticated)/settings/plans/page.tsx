@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
-import type { Plan } from "@/types";
+import type { Plan, PlanType } from "@/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ export default function PlansPage() {
   const [formDescription, setFormDescription] = useState("");
   const [formActive, setFormActive] = useState(true);
   const [formSortOrder, setFormSortOrder] = useState<number | "">(0);
+  const [formPlanType, setFormPlanType] = useState<PlanType>("subscription");
   const [deleteTarget, setDeleteTarget] = useState<Plan | null>(null);
 
   const { data: plans, isLoading, error, refetch } = useQuery<Plan[]>({
@@ -51,6 +53,7 @@ export default function PlansPage() {
         description: formDescription || null,
         is_active: formActive,
         sort_order: formSortOrder === "" ? 0 : formSortOrder,
+        plan_type: formPlanType,
       });
     },
     onSuccess: () => {
@@ -100,6 +103,7 @@ export default function PlansPage() {
     setFormDescription("");
     setFormActive(true);
     setFormSortOrder(0);
+    setFormPlanType("subscription");
   }
 
   function openEdit(plan: Plan) {
@@ -109,6 +113,7 @@ export default function PlansPage() {
     setFormDescription(plan.description || "");
     setFormActive(plan.is_active);
     setFormSortOrder(plan.sort_order);
+    setFormPlanType(plan.plan_type || "subscription");
     setEditPlan(plan);
   }
 
@@ -159,20 +164,33 @@ export default function PlansPage() {
               <p className="text-2xl font-bold">{plan.price.toLocaleString("ru-RU")} ₽</p>
               <p className="text-sm text-muted-foreground">{plan.duration_months} мес.</p>
               <p className="text-xs text-muted-foreground">Код: {plan.code}</p>
-              <StatusBadge status={plan.is_active ? "active" : "deactivated"} />
+              <div className="flex gap-1.5 flex-wrap">
+                <StatusBadge status={plan.plan_type || "subscription"} />
+                <StatusBadge status={plan.is_active ? "active" : "deactivated"} />
+              </div>
               {plan.description && <p className="text-sm text-muted-foreground">{plan.description}</p>}
             </CardContent>
           </Card>
         ))}
       </div>
 
+      {plans && plans.filter((p) => p.plan_type === "entry_fee" && p.is_active).length !== 1 && (
+        <p className="text-sm text-amber-600 font-medium">Должен быть ровно один активный план со вступительным взносом.</p>
+      )}
+
       <Dialog open={!!editPlan} onOpenChange={(o) => !o && setEditPlan(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Редактировать тариф</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Код</Label>
-              <Input value={editPlan?.code || ""} disabled className="bg-muted" />
+            <div className="grid gap-4 grid-cols-2">
+              <div className="space-y-2">
+                <Label>Код</Label>
+                <Input value={editPlan?.code || ""} disabled className="bg-muted" />
+              </div>
+              <div className="space-y-2">
+                <Label>Тип</Label>
+                <Input value={editPlan?.plan_type === "entry_fee" ? "Вступительный взнос" : "Подписка"} disabled className="bg-muted" />
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Название</Label>
@@ -229,9 +247,21 @@ export default function PlansPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>Добавить тариф</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Код</Label>
-              <Input value={formCode} onChange={(e) => setFormCode(e.target.value)} placeholder="annual" />
+            <div className="grid gap-4 grid-cols-2">
+              <div className="space-y-2">
+                <Label>Код</Label>
+                <Input value={formCode} onChange={(e) => setFormCode(e.target.value)} placeholder="annual" />
+              </div>
+              <div className="space-y-2">
+                <Label>Тип плана</Label>
+                <Select value={formPlanType} onValueChange={(v) => setFormPlanType(v as PlanType)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="subscription">Подписка</SelectItem>
+                    <SelectItem value="entry_fee">Вступительный взнос</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Название</Label>

@@ -23,6 +23,8 @@ export function ManualPaymentModal({ open, onOpenChange }: ManualPaymentModalPro
   const [amount, setAmount] = useState("");
   const [productType, setProductType] = useState<ProductType>("entry_fee");
   const [description, setDescription] = useState("");
+  const [subscriptionId, setSubscriptionId] = useState("");
+  const [eventRegistrationId, setEventRegistrationId] = useState("");
   const [loading, setLoading] = useState(false);
 
   const { data: userSearchResults } = useQuery<{ data: { id: string; email: string; full_name: string }[] }>({
@@ -39,6 +41,8 @@ export function ManualPaymentModal({ open, onOpenChange }: ManualPaymentModalPro
       setUserSearch("");
       setAmount("");
       setDescription("");
+      setSubscriptionId("");
+      setEventRegistrationId("");
     }
     onOpenChange(o);
   }
@@ -51,12 +55,19 @@ export function ManualPaymentModal({ open, onOpenChange }: ManualPaymentModalPro
     }
     setLoading(true);
     try {
-      await api.post("/admin/payments/manual", {
+      const payload: Record<string, unknown> = {
         user_id: userId,
         amount: numAmount,
         product_type: productType,
         description: description || "Ручной платёж",
-      });
+      };
+      if ((productType === "subscription" || productType === "entry_fee") && subscriptionId) {
+        payload.subscription_id = subscriptionId;
+      }
+      if (productType === "event" && eventRegistrationId) {
+        payload.event_registration_id = eventRegistrationId;
+      }
+      await api.post("/admin/payments/manual", payload);
       toast.success("Платёж создан");
       handleOpenChange(false);
       queryClient.invalidateQueries({ queryKey: ["payments"] });
@@ -103,6 +114,20 @@ export function ManualPaymentModal({ open, onOpenChange }: ManualPaymentModalPro
               </SelectContent>
             </Select>
           </div>
+          {(productType === "subscription" || productType === "entry_fee") && (
+            <div className="space-y-2">
+              <Label htmlFor="manual-sub-id">ID подписки (опционально)</Label>
+              <Input id="manual-sub-id" value={subscriptionId} onChange={(e) => setSubscriptionId(e.target.value)} placeholder="UUID подписки для автоактивации" />
+              <p className="text-xs text-muted-foreground">Если указать, подписка будет активирована автоматически</p>
+            </div>
+          )}
+          {productType === "event" && (
+            <div className="space-y-2">
+              <Label htmlFor="manual-reg-id">ID регистрации (опционально)</Label>
+              <Input id="manual-reg-id" value={eventRegistrationId} onChange={(e) => setEventRegistrationId(e.target.value)} placeholder="UUID регистрации для подтверждения" />
+              <p className="text-xs text-muted-foreground">Если указать, регистрация будет подтверждена автоматически</p>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="manual-desc">Описание *</Label>
             <Input id="manual-desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Ручной платёж" />

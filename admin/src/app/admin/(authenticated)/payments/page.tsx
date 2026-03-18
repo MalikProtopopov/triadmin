@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { ReceiptDialog } from "@/components/features/payments/ReceiptDialog";
 import { RefundModal } from "@/components/features/payments/RefundModal";
 import { ManualPaymentModal } from "@/components/features/payments/ManualPaymentModal";
+import { Input } from "@/components/ui/input";
 import { Receipt as ReceiptIcon, X, Plus, RotateCcw, ArrowUp, ArrowDown } from "lucide-react";
 import { format } from "date-fns";
 import { totalPages } from "@/lib/pagination";
@@ -35,6 +36,14 @@ function PaymentsContent() {
   const [refundOpen, setRefundOpen] = useState(false);
   const [refundPayment, setRefundPayment] = useState<PaymentItem | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
+  const [filterUserId, setFilterUserId] = useState("");
+  const [filterUserSearch, setFilterUserSearch] = useState("");
+
+  const { data: userHints } = useQuery<{ data: { id: string; email: string; full_name: string }[] }>({
+    queryKey: ["users-search-payments", filterUserSearch],
+    queryFn: () => api.get(`/admin/portal-users?search=${encodeURIComponent(filterUserSearch)}&limit=10`).then((r) => r.data),
+    enabled: filterUserSearch.length >= 2 && !filterUserId,
+  });
 
   const params = new URLSearchParams();
   params.set("limit", String(perPage));
@@ -45,6 +54,7 @@ function PaymentsContent() {
   if (status !== "all") params.set("status", status);
   if (dateRange?.from) params.set("date_from", format(dateRange.from, "yyyy-MM-dd"));
   if (dateRange?.to) params.set("date_to", format(dateRange.to, "yyyy-MM-dd"));
+  if (filterUserId) params.set("user_id", filterUserId);
 
   const { data, isLoading, error, refetch } = useQuery<PaginatedResponse<PaymentItem> & { summary: PaymentsSummary }>({
     queryKey: ["payments", params.toString()],
@@ -154,7 +164,7 @@ function PaymentsContent() {
     ];
   }, [sortOrder, toggleSort, openReceipt]);
 
-  const hasFilters = productType !== "all" || status !== "all" || !!dateRange?.from;
+  const hasFilters = productType !== "all" || status !== "all" || !!dateRange?.from || !!filterUserId;
 
   if (error) return <ErrorState message="Не удалось загрузить платежи" onRetry={refetch} />;
 
@@ -210,6 +220,7 @@ function PaymentsContent() {
             <SelectItem value="failed">Ошибка</SelectItem>
             <SelectItem value="refunded">Возвращён</SelectItem>
             <SelectItem value="partially_refunded">Частичный возврат</SelectItem>
+            <SelectItem value="canceled">Отменён</SelectItem>
           </SelectContent>
         </Select>
         <DateRangePicker
@@ -217,8 +228,30 @@ function PaymentsContent() {
           onChange={(r) => { setDateRange(r); setPage(1); }}
           placeholder="Период"
         />
+        <div className="relative">
+          <Input
+            className="w-56"
+            placeholder="Плательщик..."
+            value={filterUserSearch}
+            onChange={(e) => { setFilterUserSearch(e.target.value); if (filterUserId) { setFilterUserId(""); setPage(1); } }}
+          />
+          {(userHints?.data?.length ?? 0) > 0 && !filterUserId && (
+            <div className="absolute z-10 mt-1 w-full border rounded-md bg-background shadow-md max-h-40 overflow-auto">
+              {userHints!.data.map((u) => (
+                <button
+                  key={u.id}
+                  type="button"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
+                  onClick={() => { setFilterUserId(u.id); setFilterUserSearch(`${u.full_name} (${u.email})`); setPage(1); }}
+                >
+                  {u.full_name} — {u.email}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={() => { setProductType("all"); setStatus("all"); setDateRange(undefined); setPage(1); }}>
+          <Button variant="ghost" size="sm" onClick={() => { setProductType("all"); setStatus("all"); setDateRange(undefined); setFilterUserId(""); setFilterUserSearch(""); setPage(1); }}>
             <X className="mr-1 h-3 w-3" /> Сбросить
           </Button>
         )}
