@@ -16,9 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { ReceiptDialog } from "@/components/features/payments/ReceiptDialog";
 import { RefundModal } from "@/components/features/payments/RefundModal";
+import { CancelPaymentModal } from "@/components/features/payments/CancelPaymentModal";
 import { ManualPaymentModal } from "@/components/features/payments/ManualPaymentModal";
 import { Input } from "@/components/ui/input";
-import { Receipt as ReceiptIcon, X, Plus, RotateCcw, ArrowUp, ArrowDown, Copy } from "lucide-react";
+import { Receipt as ReceiptIcon, X, Plus, RotateCcw, ArrowUp, ArrowDown, Copy, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { totalPages } from "@/lib/pagination";
@@ -36,6 +37,8 @@ function PaymentsContent() {
   const [receiptData, setReceiptData] = useState<Receipt[] | null>(null);
   const [refundOpen, setRefundOpen] = useState(false);
   const [refundPayment, setRefundPayment] = useState<PaymentItem | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelPayment, setCancelPayment] = useState<PaymentItem | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
   const [filterUserId, setFilterUserId] = useState("");
   const [filterUserSearch, setFilterUserSearch] = useState("");
@@ -158,26 +161,42 @@ function PaymentsContent() {
         cell: ({ row }) => {
           const p = row.original;
           if (p.status === "pending") {
+            const openCancel = () => {
+              setCancelPayment(p);
+              setCancelOpen(true);
+            };
             if (p.payment_url) {
               return (
                 <div className="flex flex-col gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(p.payment_url!);
-                      toast.success("Ссылка скопирована");
-                    }}
-                  >
-                    <Copy className="mr-1 h-3 w-3" /> Скопировать ссылку
-                  </Button>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(p.payment_url!);
+                        toast.success("Ссылка скопирована");
+                      }}
+                    >
+                      <Copy className="mr-1 h-3 w-3" /> Скопировать ссылку
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={openCancel}>
+                      <XCircle className="mr-1 h-3 w-3" /> Отменить
+                    </Button>
+                  </div>
                   {p.expires_at && (
                     <span className="text-xs text-muted-foreground">до {format(new Date(p.expires_at), "dd.MM HH:mm")}</span>
                   )}
                 </div>
               );
             }
-            return <span className="text-sm text-muted-foreground">Ссылка истекла</span>;
+            return (
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-muted-foreground">Ссылка истекла</span>
+                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={openCancel}>
+                  <XCircle className="mr-1 h-3 w-3" /> Отменить
+                </Button>
+              </div>
+            );
           }
           if (p.status === "succeeded" || p.status === "partially_refunded") {
             return (
@@ -319,6 +338,13 @@ function PaymentsContent() {
         onOpenChange={setRefundOpen}
         payment={refundPayment}
         onClose={() => setRefundPayment(null)}
+      />
+
+      <CancelPaymentModal
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        payment={cancelPayment}
+        onClose={() => setCancelPayment(null)}
       />
 
       <ManualPaymentModal open={manualOpen} onOpenChange={setManualOpen} />
