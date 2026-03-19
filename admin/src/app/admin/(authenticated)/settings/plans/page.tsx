@@ -77,6 +77,7 @@ export default function PlansPage() {
         description: formDescription || null,
         is_active: formActive,
         sort_order: formSortOrder === "" ? 0 : formSortOrder,
+        plan_type: formPlanType,
       });
     },
     onSuccess: () => {
@@ -188,8 +189,14 @@ export default function PlansPage() {
                 <Input value={editPlan?.code || ""} disabled className="bg-muted" />
               </div>
               <div className="space-y-2">
-                <Label>Тип</Label>
-                <Input value={editPlan?.plan_type === "entry_fee" ? "Вступительный взнос" : "Подписка"} disabled className="bg-muted" />
+                <Label>Тип плана</Label>
+                <Select value={formPlanType} onValueChange={(v) => setFormPlanType(v as PlanType)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="subscription">Подписка</SelectItem>
+                    <SelectItem value="entry_fee">Вступительный взнос</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="space-y-2">

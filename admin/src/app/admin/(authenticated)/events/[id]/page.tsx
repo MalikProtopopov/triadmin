@@ -12,6 +12,7 @@ import { DataTable } from "@/components/shared/DataTable";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Pencil, Users, CheckCircle, Clock, DollarSign, ImageIcon, Video, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { ColumnDef } from "@tanstack/react-table";
@@ -50,15 +51,21 @@ const regColumns: ColumnDef<EventRegistration>[] = [
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [regPage, setRegPage] = useState(1);
+  const [regStatusFilter, setRegStatusFilter] = useState<string>("all");
 
   const { data: event, isLoading, error, refetch } = useQuery<EventDetail>({
     queryKey: ["event", id],
     queryFn: () => api.get(`/admin/events/${id}`).then((r) => r.data),
   });
 
+  const regParams = new URLSearchParams();
+  regParams.set("limit", "20");
+  regParams.set("offset", String((regPage - 1) * 20));
+  if (regStatusFilter !== "all") regParams.set("status", regStatusFilter);
+
   const { data: regs, isLoading: regsLoading } = useQuery<RegistrationListResponse>({
-    queryKey: ["event-registrations", id, regPage],
-    queryFn: () => api.get(`/admin/events/${id}/registrations?limit=20&offset=${(regPage - 1) * 20}`).then((r) => r.data),
+    queryKey: ["event-registrations", id, regPage, regStatusFilter],
+    queryFn: () => api.get(`/admin/events/${id}/registrations?${regParams}`).then((r) => r.data),
     enabled: !!event,
   });
 
@@ -208,7 +215,20 @@ export default function EventDetailPage() {
 
       {/* Registrations */}
       <Card>
-        <CardHeader><CardTitle className="text-base">Участники</CardTitle></CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-base">Участники</CardTitle>
+          <Select value={regStatusFilter} onValueChange={(v) => { setRegStatusFilter(v); setRegPage(1); }}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Статус" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все статусы</SelectItem>
+              <SelectItem value="pending">Ожидают</SelectItem>
+              <SelectItem value="confirmed">Подтверждено</SelectItem>
+              <SelectItem value="cancelled">Отменено</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardHeader>
         <CardContent>
           <DataTable
             columns={regColumns}

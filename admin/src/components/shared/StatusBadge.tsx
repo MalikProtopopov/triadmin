@@ -15,6 +15,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: Variant; className
   expired: { label: "Истекла", variant: "destructive" },
   expiring_soon: { label: "Истекает", variant: "outline", className: "border-orange-500 text-orange-700 bg-orange-50" },
   never: { label: "Нет подписки", variant: "secondary" },
+  none: { label: "Нет подписки", variant: "secondary" },
   pending_payment: { label: "Ожидает оплаты", variant: "outline", className: "border-yellow-500 text-yellow-700 bg-yellow-50" },
   completed: { label: "Оплачен", variant: "outline", className: "border-green-500 text-green-700 bg-green-50" },
   succeeded: { label: "Оплачен", variant: "outline", className: "border-green-500 text-green-700 bg-green-50" },

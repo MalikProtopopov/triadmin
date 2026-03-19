@@ -117,8 +117,12 @@ function DoctorsListContent() {
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [status, setStatus] = useState(searchParams.get("status") || "all");
-  const [subscriptionStatus, setSubscriptionStatus] = useState(searchParams.get("subscription_status") || "all");
+  const [subscriptionStatus, setSubscriptionStatus] = useState(() => {
+    const v = searchParams.get("subscription_status");
+    return v === "never" ? "none" : (v || "all");
+  });
   const [cityId, setCityId] = useState(searchParams.get("city_id") || "all");
+  const [specialization, setSpecialization] = useState(searchParams.get("specialization") || "all");
   const [hasPendingDraft, setHasPendingDraft] = useState(searchParams.get("has_data_changed") === "true");
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
   const [perPage, setPerPage] = useState(20);
@@ -140,6 +144,7 @@ function DoctorsListContent() {
   if (status !== "all") params.set("status", status);
   if (subscriptionStatus !== "all") params.set("subscription_status", subscriptionStatus);
   if (cityId !== "all") params.set("city_id", cityId);
+  if (specialization !== "all") params.set("specialization", specialization);
   if (hasPendingDraft) params.set("has_data_changed", "true");
   const sortBy = sorting[0]?.id || "created_at";
   const sortOrder = sorting[0]?.desc ? "desc" : "asc";
@@ -152,17 +157,37 @@ function DoctorsListContent() {
   });
 
   const { data: cities } = useQuery<{ data: City[] }>({
-    queryKey: ["cities"],
-    queryFn: () => api.get("/cities").then((r) => r.data),
+    queryKey: ["admin-cities"],
+    queryFn: () =>
+      api.get("/admin/cities").then((r) => {
+        const d = r.data;
+        return Array.isArray(d) ? { data: d } : (d as { data: City[] });
+      }),
   });
 
-  const hasFilters = search || status !== "all" || subscriptionStatus !== "all" || cityId !== "all" || hasPendingDraft;
+  // TODO: Заменить на GET /admin/specializations, когда бэкенд добавит эндпоинт. Сейчас workaround — уникальные строки из GET /admin/doctors (limit 200). План: api_plan_verification.
+  const { data: specializationsData } = useQuery<PaginatedResponse<DoctorListItem>>({
+    queryKey: ["doctors-specializations"],
+    queryFn: () =>
+      api.get("/admin/doctors?limit=200&offset=0").then((r) => r.data),
+  });
+  const specializations = useMemo(() => {
+    const items = specializationsData?.data ?? [];
+    const set = new Set<string>();
+    for (const d of items) {
+      if (d.specialization?.trim()) set.add(d.specialization.trim());
+    }
+    return Array.from(set).sort();
+  }, [specializationsData?.data]);
+
+  const hasFilters = search || status !== "all" || subscriptionStatus !== "all" || cityId !== "all" || specialization !== "all" || hasPendingDraft;
 
   function resetFilters() {
     setSearch("");
     setStatus("all");
     setSubscriptionStatus("all");
     setCityId("all");
+    setSpecialization("all");
     setHasPendingDraft(false);
     setPage(1);
   }
@@ -217,9 +242,9 @@ function DoctorsListContent() {
           <SelectContent>
             <SelectItem value="all">Все подписки</SelectItem>
             <SelectItem value="active">Активна</SelectItem>
+            <SelectItem value="expiring_soon">Истекает</SelectItem>
             <SelectItem value="expired">Истекла</SelectItem>
-            <SelectItem value="expiring_soon">Истекает скоро</SelectItem>
-            <SelectItem value="never">Нет</SelectItem>
+            <SelectItem value="none">Нет</SelectItem>
           </SelectContent>
         </Select>
         <Select value={cityId} onValueChange={(v) => { setCityId(v); setPage(1); }}>
@@ -230,6 +255,17 @@ function DoctorsListContent() {
             <SelectItem value="all">Все города</SelectItem>
             {cities?.data?.map((c) => (
               <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={specialization} onValueChange={(v) => { setSpecialization(v); setPage(1); }}>
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="Специализация" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все специализации</SelectItem>
+            {specializations.map((s) => (
+              <SelectItem key={s} value={s}>{s}</SelectItem>
             ))}
           </SelectContent>
         </Select>

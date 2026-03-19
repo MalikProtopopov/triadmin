@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-// TODO: Check if GET /api/v1/specializations endpoint is available.
-// If so, add a multi-select for specialization_ids to the doctor creation form.
+// TODO: Add specialization_ids field to form when GET /admin/specializations exists.
+// POST /admin/doctors accepts specialization_ids: UUID[]. Without the list endpoint we cannot provide IDs.
 import { toast } from "sonner";
 import { UserPlus, Loader2, Copy, ChevronDown, ChevronUp } from "lucide-react";
 import api from "@/lib/api";
@@ -101,7 +101,11 @@ export function CreateDoctorModal({ onCreated }: Props) {
 
   const { data: citiesData } = useQuery<{ data: City[] }>({
     queryKey: ["cities"],
-    queryFn: () => api.get("/cities").then((r) => r.data),
+    queryFn: () =>
+      api.get("/admin/cities").then((r) => {
+        const d = r.data;
+        return Array.isArray(d) ? { data: d } : (d && typeof d === "object" && "data" in d ? d : { data: d });
+      }),
     enabled: open,
   });
 

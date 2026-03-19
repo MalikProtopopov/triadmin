@@ -154,7 +154,7 @@ export function ContentBlocksEditor({ entityType, entityId, initialBlocks }: Con
   const { data: blocks = [] } = useQuery<ContentBlock[]>({
     queryKey,
     queryFn: () =>
-      api.get(`/admin/content-blocks?entity_type=${entityType}&entity_id=${entityId}`).then((r) => r.data.data || r.data),
+      api.get(`/admin/content-blocks?entity_type=${entityType}&entity_id=${entityId}&locale=ru`).then((r) => r.data.data || r.data),
     enabled: !hasInitialData,
     initialData: hasInitialData ? initialBlocks : undefined,
   });

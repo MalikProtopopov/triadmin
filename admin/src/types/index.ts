@@ -1,7 +1,7 @@
 export type Role = "admin" | "manager" | "accountant" | "doctor" | "non_doctor";
 
 export type ModerationStatus = "pending_review" | "approved" | "rejected";
-export type DoctorStatus = "pending_review" | "approved" | "rejected" | "active" | "deactivated" | "inactive";
+export type DoctorStatus = "pending_review" | "approved" | "rejected" | "active" | "deactivated";
 export type SubscriptionStatus = "active" | "expired" | "expiring_soon" | "never" | "pending_payment";
 export type PaymentStatus = "pending" | "succeeded" | "failed" | "refunded" | "partially_refunded" | "canceled";
 export type ProductType = "entry_fee" | "subscription" | "event";
