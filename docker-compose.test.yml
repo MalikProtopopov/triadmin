@@ -6,6 +6,7 @@ services:
       args:
         NEXT_PUBLIC_USE_MOCK: ${NEXT_PUBLIC_USE_MOCK}
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_ENABLE_MANUAL_CONFIRM: ${NEXT_PUBLIC_ENABLE_MANUAL_CONFIRM:-true}
     container_name: troh-admin-test
     ports:
       - "${ADMIN_PORT:-3100}:3000"

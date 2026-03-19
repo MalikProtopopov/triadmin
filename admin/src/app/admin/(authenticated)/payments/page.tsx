@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import type { DateRange } from "react-day-picker";
 import api from "@/lib/api";
@@ -19,13 +19,17 @@ import { RefundModal } from "@/components/features/payments/RefundModal";
 import { CancelPaymentModal } from "@/components/features/payments/CancelPaymentModal";
 import { ManualPaymentModal } from "@/components/features/payments/ManualPaymentModal";
 import { Input } from "@/components/ui/input";
-import { Receipt as ReceiptIcon, X, Plus, RotateCcw, ArrowUp, ArrowDown, Copy, XCircle } from "lucide-react";
+import { Receipt as ReceiptIcon, X, Plus, RotateCcw, ArrowUp, ArrowDown, Copy, XCircle, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { totalPages } from "@/lib/pagination";
 import { Suspense } from "react";
 
+const showManualConfirm =
+  process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENABLE_MANUAL_CONFIRM === "true";
+
 function PaymentsContent() {
+  const queryClient = useQueryClient();
   const [productType, setProductType] = useState("all");
   const [status, setStatus] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -39,6 +43,7 @@ function PaymentsContent() {
   const [refundPayment, setRefundPayment] = useState<PaymentItem | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelPayment, setCancelPayment] = useState<PaymentItem | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState<string | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
   const [filterUserId, setFilterUserId] = useState("");
   const [filterUserSearch, setFilterUserSearch] = useState("");
@@ -72,6 +77,21 @@ function PaymentsContent() {
       setReceiptOpen(true);
     } catch { /* handled by interceptor */ }
   }, []);
+
+  const handleConfirm = useCallback(
+    async (paymentId: string) => {
+      setConfirmLoading(paymentId);
+      try {
+        const { data } = await api.post(`/admin/payments/${paymentId}/confirm`);
+        toast.success(data.message);
+        queryClient.invalidateQueries({ queryKey: ["payments"] });
+      } catch { /* handled by interceptor */ }
+      finally {
+        setConfirmLoading(null);
+      }
+    },
+    [queryClient]
+  );
 
   const toggleSort = useCallback(() => {
     setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
@@ -179,6 +199,18 @@ function PaymentsContent() {
                     >
                       <Copy className="mr-1 h-3 w-3" /> Скопировать ссылку
                     </Button>
+                    {showManualConfirm && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-green-600 hover:text-green-700"
+                        onClick={() => handleConfirm(p.id)}
+                        disabled={confirmLoading === p.id}
+                      >
+                        <CheckCircle className="mr-1 h-3 w-3" />
+                        {confirmLoading === p.id ? "..." : "Подтвердить вручную"}
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={openCancel}>
                       <XCircle className="mr-1 h-3 w-3" /> Отменить
                     </Button>
@@ -190,8 +222,20 @@ function PaymentsContent() {
               );
             }
             return (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-wrap">
                 <span className="text-sm text-muted-foreground">Ссылка истекла</span>
+                {showManualConfirm && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-green-600 hover:text-green-700"
+                    onClick={() => handleConfirm(p.id)}
+                    disabled={confirmLoading === p.id}
+                  >
+                    <CheckCircle className="mr-1 h-3 w-3" />
+                    {confirmLoading === p.id ? "..." : "Подтвердить вручную"}
+                  </Button>
+                )}
                 <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={openCancel}>
                   <XCircle className="mr-1 h-3 w-3" /> Отменить
                 </Button>
@@ -223,7 +267,7 @@ function PaymentsContent() {
         },
       },
     ];
-  }, [sortOrder, toggleSort, openReceipt]);
+  }, [sortOrder, toggleSort, openReceipt, handleConfirm, confirmLoading]);
 
   const hasFilters = productType !== "all" || status !== "all" || !!dateRange?.from || !!filterUserId;
 
