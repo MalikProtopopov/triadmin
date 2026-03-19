@@ -20,12 +20,17 @@ import { FormSkeleton } from "@/components/shared/FormSkeleton";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-const schema = z.object({
-  title: z.string().min(3, "Минимум 3 символа"),
-  description: z.string().optional(),
-  starts_at: z.string().min(1, "Укажите дату начала"),
-  ends_at: z.string().min(1, "Укажите дату окончания"),
-});
+const schema = z
+  .object({
+    title: z.string().min(3, "Минимум 3 символа").max(500, "Максимум 500 символов"),
+    description: z.string().optional(),
+    starts_at: z.string().min(1, "Укажите дату начала"),
+    ends_at: z.string().min(1, "Укажите дату окончания"),
+  })
+  .refine((d) => !d.starts_at || !d.ends_at || new Date(d.ends_at) > new Date(d.starts_at), {
+    message: "Дата окончания должна быть позже начала",
+    path: ["ends_at"],
+  });
 
 type FormData = z.infer<typeof schema>;
 
@@ -60,6 +65,13 @@ export default function NewVotingPage() {
       queryClient.invalidateQueries({ queryKey: ["voting-sessions"] });
       toast.success("Сессия голосования создана");
       router.push("/admin/voting");
+    },
+    onError: (err: unknown) => {
+      const e = err as { response?: { status?: number; data?: { detail?: string | string[]; message?: string } } };
+      const msg = e.response?.status === 422
+        ? (Array.isArray(e.response?.data?.detail) ? e.response.data.detail.join(", ") : e.response?.data?.detail || e.response?.data?.message)
+        : "Не удалось создать сессию";
+      toast.error(msg);
     },
   });
 

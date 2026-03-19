@@ -19,7 +19,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: Variant; className
   pending_payment: { label: "Ожидает оплаты", variant: "outline", className: "border-yellow-500 text-yellow-700 bg-yellow-50" },
   completed: { label: "Оплачен", variant: "outline", className: "border-green-500 text-green-700 bg-green-50" },
   succeeded: { label: "Оплачен", variant: "outline", className: "border-green-500 text-green-700 bg-green-50" },
-  failed: { label: "Ошибка", variant: "destructive" },
+  failed: { label: "Отклонён", variant: "destructive" },
   refunded: { label: "Возвращён", variant: "secondary" },
   partially_refunded: { label: "Частичный возврат", variant: "outline", className: "border-orange-500 text-orange-700 bg-orange-50" },
   draft: { label: "Черновик", variant: "secondary" },
@@ -47,14 +47,16 @@ const STATUS_CONFIG: Record<string, { label: string; variant: Variant; className
 interface StatusBadgeProps {
   status: string;
   label?: string;
+  variant?: Variant;
   className?: string;
 }
 
-export function StatusBadge({ status, label, className }: StatusBadgeProps) {
+export function StatusBadge({ status, label, variant, className }: StatusBadgeProps) {
   const config = STATUS_CONFIG[status] || { label: status, variant: "secondary" as Variant };
+  const effectiveVariant = variant ?? config.variant;
   return (
-    <Badge variant={config.variant} className={`${config.className || ""} ${className || ""}`}>
-      {label || config.label}
+    <Badge variant={effectiveVariant} className={`${config.className || ""} ${className || ""}`}>
+      {label ?? config.label}
     </Badge>
   );
 }

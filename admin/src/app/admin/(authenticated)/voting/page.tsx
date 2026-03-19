@@ -46,6 +46,13 @@ export default function VotingPage() {
       toast.success("Статус обновлён");
       setActionTarget(null);
     },
+    onError: (err: unknown) => {
+      const e = err as { response?: { status?: number; data?: { detail?: string | string[]; message?: string } } };
+      const msg = e.response?.status === 422
+        ? (Array.isArray(e.response?.data?.detail) ? e.response.data.detail.join(", ") : e.response?.data?.detail || e.response?.data?.message)
+        : "Не удалось обновить статус";
+      toast.error(msg);
+    },
   });
 
   const columns = useMemo<ColumnDef<VotingSession>[]>(() => [
@@ -89,12 +96,22 @@ export default function VotingPage() {
                   <Eye className="mr-2 h-4 w-4" /> Посмотреть
                 </Link>
               </DropdownMenuItem>
+              {s.status === "draft" && (
+                <DropdownMenuItem onClick={() => setActionTarget({ session: s, action: "active" })}>
+                  <Play className="mr-2 h-4 w-4" /> Запустить
+                </DropdownMenuItem>
+              )}
+              {s.status === "draft" && (
+                <DropdownMenuItem onClick={() => setActionTarget({ session: s, action: "cancelled" })} className="text-destructive">
+                  <XCircle className="mr-2 h-4 w-4" /> Отменить
+                </DropdownMenuItem>
+              )}
               {s.status === "active" && (
                 <DropdownMenuItem onClick={() => setActionTarget({ session: s, action: "closed" })}>
                   <Square className="mr-2 h-4 w-4" /> Закрыть
                 </DropdownMenuItem>
               )}
-              {(s.status === "active") && (
+              {s.status === "active" && (
                 <DropdownMenuItem onClick={() => setActionTarget({ session: s, action: "cancelled" })} className="text-destructive">
                   <XCircle className="mr-2 h-4 w-4" /> Отменить
                 </DropdownMenuItem>
@@ -123,6 +140,7 @@ export default function VotingPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Все статусы</SelectItem>
+            <SelectItem value="draft">Черновик</SelectItem>
             <SelectItem value="active">Активна</SelectItem>
             <SelectItem value="closed">Завершена</SelectItem>
             <SelectItem value="cancelled">Отменена</SelectItem>
@@ -146,12 +164,18 @@ export default function VotingPage() {
       <ConfirmDialog
         open={!!actionTarget}
         onOpenChange={(o) => !o && setActionTarget(null)}
-        title=      {
+        title={
+          actionTarget?.action === "active" ? "Запустить голосование?" :
           actionTarget?.action === "closed" ? "Закрыть голосование?" :
           "Отменить голосование?"
         }
-        description={`Сессия «${actionTarget?.session.title}»`}
+        description={
+          actionTarget?.action === "active"
+            ? "Врачи смогут начать голосовать. Продолжить?"
+            : `Сессия «${actionTarget?.session.title}»`
+        }
         confirmLabel={
+          actionTarget?.action === "active" ? "Запустить" :
           actionTarget?.action === "closed" ? "Закрыть" :
           "Отменить"
         }

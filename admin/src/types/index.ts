@@ -3,11 +3,11 @@ export type Role = "admin" | "manager" | "accountant" | "doctor" | "non_doctor";
 export type ModerationStatus = "pending_review" | "approved" | "rejected";
 export type DoctorStatus = "pending_review" | "approved" | "rejected" | "active" | "deactivated";
 export type SubscriptionStatus = "active" | "expired" | "expiring_soon" | "never" | "pending_payment";
-export type PaymentStatus = "pending" | "succeeded" | "failed" | "refunded" | "partially_refunded" | "canceled";
+export type PaymentStatus = "pending" | "succeeded" | "failed" | "expired" | "refunded" | "partially_refunded" | "canceled";
 export type ProductType = "entry_fee" | "subscription" | "event";
 export type EventStatus = "upcoming" | "ongoing" | "finished" | "cancelled";
 export type ArticleStatus = "draft" | "published" | "archived";
-export type VotingStatus = "active" | "closed" | "cancelled";
+export type VotingStatus = "draft" | "active" | "closed" | "cancelled";
 export type NotificationType = "reminder" | "payment" | "moderation" | "manual";
 export type NotificationChannel = "email" | "telegram" | "both";
 export type ContentBlockType = "text" | "image" | "video" | "gallery" | "link";
@@ -129,6 +129,9 @@ export interface PaymentItem {
   product_type: ProductType;
   payment_provider?: string;
   status: PaymentStatus;
+  status_label?: string;
+  payment_url?: string | null;
+  expires_at?: string | null;
   description?: string;
   has_receipt?: boolean;
   paid_at: string | null;
@@ -323,9 +326,11 @@ export interface VotingSession {
 
 export interface VotingCandidate {
   id: string;
+  doctor_profile_id?: string;
   full_name: string;
   photo_url: string | null;
   description: string | null;
+  sort_order?: number;
 }
 
 export interface ResultSessionNested {

@@ -18,8 +18,9 @@ import { ReceiptDialog } from "@/components/features/payments/ReceiptDialog";
 import { RefundModal } from "@/components/features/payments/RefundModal";
 import { ManualPaymentModal } from "@/components/features/payments/ManualPaymentModal";
 import { Input } from "@/components/ui/input";
-import { Receipt as ReceiptIcon, X, Plus, RotateCcw, ArrowUp, ArrowDown } from "lucide-react";
+import { Receipt as ReceiptIcon, X, Plus, RotateCcw, ArrowUp, ArrowDown, Copy } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import { totalPages } from "@/lib/pagination";
 import { Suspense } from "react";
 
@@ -129,36 +130,77 @@ function PaymentsContent() {
       {
         accessorKey: "status",
         header: "Статус",
-        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+        cell: ({ row }) => {
+          const p = row.original;
+          return (
+            <StatusBadge
+              status={p.status}
+              label={p.status_label}
+              variant={p.status === "expired" ? "secondary" : undefined}
+            />
+          );
+        },
       },
       {
-        id: "receipt",
-        header: "Чек",
-        cell: ({ row }) =>
-          row.original.has_receipt ? (
-            <Button variant="ghost" size="icon" onClick={() => openReceipt(row.original.id)}>
-              <ReceiptIcon className="h-4 w-4" />
-            </Button>
-          ) : null,
+        id: "expires_at",
+        header: "Срок",
+        cell: ({ row }) => {
+          const p = row.original;
+          if (p.status === "pending" && p.expires_at) {
+            return format(new Date(p.expires_at), "dd.MM HH:mm");
+          }
+          return null;
+        },
       },
       {
         id: "actions",
-        header: "",
+        header: "Действия",
         cell: ({ row }) => {
           const p = row.original;
-          const canRefund = (p.status === "succeeded" || p.status === "partially_refunded");
-          return canRefund ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setRefundPayment(p);
-                setRefundOpen(true);
-              }}
-            >
-              <RotateCcw className="mr-1 h-3 w-3" /> Возврат
-            </Button>
-          ) : null;
+          if (p.status === "pending") {
+            if (p.payment_url) {
+              return (
+                <div className="flex flex-col gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(p.payment_url!);
+                      toast.success("Ссылка скопирована");
+                    }}
+                  >
+                    <Copy className="mr-1 h-3 w-3" /> Скопировать ссылку
+                  </Button>
+                  {p.expires_at && (
+                    <span className="text-xs text-muted-foreground">до {format(new Date(p.expires_at), "dd.MM HH:mm")}</span>
+                  )}
+                </div>
+              );
+            }
+            return <span className="text-sm text-muted-foreground">Ссылка истекла</span>;
+          }
+          if (p.status === "succeeded" || p.status === "partially_refunded") {
+            return (
+              <div className="flex items-center gap-1">
+                {p.has_receipt && (
+                  <Button variant="ghost" size="icon" onClick={() => openReceipt(p.id)} title="Чек">
+                    <ReceiptIcon className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setRefundPayment(p);
+                    setRefundOpen(true);
+                  }}
+                >
+                  <RotateCcw className="mr-1 h-3 w-3" /> Возврат
+                </Button>
+              </div>
+            );
+          }
+          return null;
         },
       },
     ];
@@ -217,10 +259,10 @@ function PaymentsContent() {
             <SelectItem value="all">Все статусы</SelectItem>
             <SelectItem value="pending">Ожидает</SelectItem>
             <SelectItem value="succeeded">Оплачен</SelectItem>
-            <SelectItem value="failed">Ошибка</SelectItem>
+            <SelectItem value="failed">Отклонён</SelectItem>
+            <SelectItem value="expired">Истёк</SelectItem>
             <SelectItem value="refunded">Возвращён</SelectItem>
             <SelectItem value="partially_refunded">Частичный возврат</SelectItem>
-            <SelectItem value="canceled">Отменён</SelectItem>
           </SelectContent>
         </Select>
         <DateRangePicker

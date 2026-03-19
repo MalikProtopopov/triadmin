@@ -7,13 +7,23 @@ import api from "@/lib/api";
 import type { VotingSessionDetail, VotingSessionResults } from "@/types";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { DetailSkeleton } from "@/components/shared/DetailSkeleton";
 import { ErrorState } from "@/components/shared/ErrorState";
-import { ArrowLeft, Play, Square, XCircle, BarChart3, ExternalLink } from "lucide-react";
+import { ArrowLeft, Play, Square, XCircle, BarChart3, ExternalLink, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -23,6 +33,9 @@ export default function VotingDetailPage() {
   const queryClient = useQueryClient();
   const id = params.id as string;
   const [actionTarget, setActionTarget] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editEndsAt, setEditEndsAt] = useState("");
 
   const { data: session, isLoading, error } = useQuery<VotingSessionDetail>({
     queryKey: ["voting-session", id],
@@ -48,6 +61,34 @@ export default function VotingDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["voting-sessions"] });
       toast.success("Статус обновлён");
       setActionTarget(null);
+    },
+    onError: (err: unknown) => {
+      const e = err as { response?: { status?: number; data?: { detail?: string | string[]; message?: string } } };
+      const msg = e.response?.status === 422
+        ? (Array.isArray(e.response?.data?.detail) ? e.response.data.detail.join(", ") : e.response?.data?.detail || e.response?.data?.message)
+        : "Не удалось обновить статус";
+      toast.error(msg);
+    },
+  });
+
+  const mutateUpdate = useMutation({
+    mutationFn: (body: { title: string; ends_at: string }) =>
+      api.patch(`/admin/voting/${id}`, {
+        title: body.title,
+        ends_at: new Date(body.ends_at).toISOString(),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["voting-session", id] });
+      queryClient.invalidateQueries({ queryKey: ["voting-sessions"] });
+      toast.success("Изменения сохранены");
+      setEditOpen(false);
+    },
+    onError: (err: unknown) => {
+      const e = err as { response?: { status?: number; data?: { detail?: string | string[]; message?: string } } };
+      const msg = e.response?.status === 422
+        ? (Array.isArray(e.response?.data?.detail) ? e.response.data.detail.join(", ") : e.response?.data?.detail || e.response?.data?.message)
+        : "Не удалось сохранить";
+      toast.error(msg);
     },
   });
 
@@ -116,6 +157,28 @@ export default function VotingDetailPage() {
       </div>
 
       <div className="flex flex-wrap gap-2">
+        {s.status === "draft" && (
+          <Button onClick={() => setActionTarget("active")}>
+            <Play className="mr-2 h-4 w-4" /> Запустить голосование
+          </Button>
+        )}
+        {s.status === "draft" && (
+          <Button variant="destructive" onClick={() => setActionTarget("cancelled")}>
+            <XCircle className="mr-2 h-4 w-4" /> Отменить
+          </Button>
+        )}
+        {s.status === "draft" && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              setEditTitle(s.title);
+              setEditEndsAt(new Date(s.ends_at).toISOString().slice(0, 16));
+              setEditOpen(true);
+            }}
+          >
+            <Pencil className="mr-2 h-4 w-4" /> Редактировать
+          </Button>
+        )}
         {s.status === "active" && (
           <Button onClick={() => setActionTarget("closed")}>
             <Square className="mr-2 h-4 w-4" /> Закрыть голосование
@@ -134,6 +197,74 @@ export default function VotingDetailPage() {
           </Button>
         )}
       </div>
+
+      {s.candidates && s.candidates.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Кандидаты</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[...s.candidates]
+                .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                .map((c) => (
+                  <div key={c.id} className="flex gap-3 rounded-lg border p-3">
+                    {c.photo_url ? (
+                      <img
+                        src={c.photo_url}
+                        alt={c.full_name}
+                        className="h-14 w-14 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground text-lg font-medium">
+                        {c.full_name.charAt(0)}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      {c.doctor_profile_id ? (
+                        <Link
+                          href={`/admin/doctors/${c.doctor_profile_id}`}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          {c.full_name}
+                        </Link>
+                      ) : (
+                        <p className="font-medium">{c.full_name}</p>
+                      )}
+                      {c.description && (
+                        <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {s.status === "active" && (
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardContent className="pt-4 text-sm text-muted-foreground">
+            После окончания срока ({format(new Date(s.ends_at), "dd.MM.yyyy HH:mm")}) голосование перестаёт принимать голоса. Рекомендуется вручную перевести в «Завершено» для фиксации результатов.
+          </CardContent>
+        </Card>
+      )}
+
+      {s.status === "draft" && !results && (
+        <Card className="border-muted">
+          <CardContent className="pt-4 text-sm text-muted-foreground">
+            Результаты будут доступны после запуска голосования.
+          </CardContent>
+        </Card>
+      )}
+
+      {s.status === "cancelled" && !results && (
+        <Card className="border-muted">
+          <CardContent className="pt-4 text-sm text-muted-foreground">
+            Голосование отменено. Результаты не подсчитываются.
+          </CardContent>
+        </Card>
+      )}
 
       {results && (
         <Card>
@@ -176,15 +307,68 @@ export default function VotingDetailPage() {
         </Card>
       )}
 
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Редактировать</DialogTitle>
+            <DialogDescription>
+              Название и дата окончания. Дата начала и кандидаты изменяться не могут.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              mutateUpdate.mutate({ title: editTitle, ends_at: editEndsAt });
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Название</Label>
+              <Input
+                id="edit-title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                maxLength={500}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-ends">Дата окончания</Label>
+              <Input
+                id="edit-ends"
+                type="datetime-local"
+                value={editEndsAt}
+                onChange={(e) => setEditEndsAt(e.target.value)}
+                required
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
+                Отмена
+              </Button>
+              <Button type="submit" disabled={mutateUpdate.isPending}>
+                Сохранить
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <ConfirmDialog
         open={!!actionTarget}
         onOpenChange={(o) => !o && setActionTarget(null)}
         title={
+          actionTarget === "active" ? "Запустить голосование?" :
           actionTarget === "closed" ? "Закрыть голосование?" :
           "Отменить голосование?"
         }
-        description={`Сессия «${s.title}»`}
+        description={
+          actionTarget === "active"
+            ? "Врачи смогут начать голосовать. Продолжить?"
+            : `Сессия «${s.title}»`
+        }
         confirmLabel={
+          actionTarget === "active" ? "Запустить" :
           actionTarget === "closed" ? "Закрыть" :
           "Отменить"
         }
