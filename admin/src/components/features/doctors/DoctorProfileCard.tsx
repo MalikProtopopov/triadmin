@@ -12,6 +12,7 @@ import { Check, X, Power, PowerOff, Mail, Bell, FileWarning, ImageIcon } from "l
 import { buildMediaUrl } from "@/lib/media";
 import { ContentBlocksEditor } from "@/components/shared/ContentBlocksEditor";
 import { DoctorModals } from "./DoctorModals";
+import { CertificatesSection } from "./CertificatesSection";
 import { format } from "date-fns";
 
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
@@ -139,6 +140,7 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
               <TabsTrigger value="content">Контентные блоки</TabsTrigger>
               <TabsTrigger value="payments">Платежи</TabsTrigger>
               <TabsTrigger value="events">Мероприятия</TabsTrigger>
+              <TabsTrigger value="certificates">Сертификаты</TabsTrigger>
               <TabsTrigger value="log">Лог</TabsTrigger>
             </TabsList>
 
@@ -329,6 +331,10 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
                   <p className="text-sm text-muted-foreground">Данные о мероприятиях врача пока недоступны через API</p>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="certificates">
+              <CertificatesSection doctorId={doctor.id} />
             </TabsContent>
 
             <TabsContent value="log">

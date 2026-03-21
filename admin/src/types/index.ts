@@ -519,6 +519,32 @@ export interface SendNotificationRequest {
   channels: ("email" | "telegram")[];
 }
 
+export interface CertificateSettings {
+  id: number;
+  president_full_name: string | null;
+  president_title: string | null;
+  organization_full_name: string | null;
+  organization_short_name: string | null;
+  certificate_member_text: string | null;
+  logo_url: string | null;
+  stamp_url: string | null;
+  signature_url: string | null;
+  background_url: string | null;
+  certificate_number_prefix: string;
+  validity_text_template: string | null;
+  updated_at: string;
+}
+
+export interface DoctorCertificate {
+  id: string;
+  certificate_type: "member" | "event";
+  year: number;
+  certificate_number: string;
+  is_active: boolean;
+  generated_at: string;
+  download_url: string | null;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   total: number;
