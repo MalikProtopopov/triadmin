@@ -169,7 +169,7 @@ function DoctorsListContent() {
   const { data: specializationsData } = useQuery<PaginatedResponse<DoctorListItem>>({
     queryKey: ["doctors-specializations"],
     queryFn: () =>
-      api.get("/admin/doctors?limit=200&offset=0").then((r) => r.data),
+      api.get("/admin/doctors?limit=100&offset=0").then((r) => r.data),
   });
   const specializations = useMemo(() => {
     const items = specializationsData?.data ?? [];

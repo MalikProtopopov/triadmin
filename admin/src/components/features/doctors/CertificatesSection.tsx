@@ -12,7 +12,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Eye, Download, RefreshCw, Power, PowerOff, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { getAccessToken } from "@/lib/api";
+import { useRole } from "@/hooks/useRole";
 
 const CERT_TYPE_LABELS: Record<string, string> = {
   member: "Членство",
@@ -25,6 +25,7 @@ interface CertificatesSectionProps {
 
 export function CertificatesSection({ doctorId }: CertificatesSectionProps) {
   const queryClient = useQueryClient();
+  const { isAdmin } = useRole();
   const [regenerateYear, setRegenerateYear] = useState<number | null>(null);
   const [toggleTarget, setToggleTarget] = useState<DoctorCertificate | null>(null);
 
@@ -57,11 +58,17 @@ export function CertificatesSection({ doctorId }: CertificatesSectionProps) {
     },
   });
 
-  function openPreview(certId: string) {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-    const token = getAccessToken();
-    const url = `${baseUrl}/admin/certificates/${certId}/download?disposition=inline&token=${token}`;
-    window.open(url, "_blank");
+  async function openPreview(certId: string) {
+    try {
+      const resp = await api.get(`/admin/certificates/${certId}/download?disposition=inline`, {
+        responseType: "blob",
+      });
+      const blobUrl = URL.createObjectURL(resp.data);
+      window.open(blobUrl, "_blank");
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    } catch {
+      /* handled by interceptor */
+    }
   }
 
   async function downloadCert(certId: string, fileName: string) {
@@ -162,18 +169,20 @@ export function CertificatesSection({ doctorId }: CertificatesSectionProps) {
                         >
                           <RefreshCw className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title={cert.is_active ? "Деактивировать" : "Активировать"}
-                          onClick={() => setToggleTarget(cert)}
-                        >
-                          {cert.is_active ? (
-                            <PowerOff className="h-4 w-4" />
-                          ) : (
-                            <Power className="h-4 w-4" />
-                          )}
-                        </Button>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title={cert.is_active ? "Деактивировать" : "Активировать"}
+                            onClick={() => setToggleTarget(cert)}
+                          >
+                            {cert.is_active ? (
+                              <PowerOff className="h-4 w-4" />
+                            ) : (
+                              <Power className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
