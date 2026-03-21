@@ -33,6 +33,7 @@ export const ROLE_SIDEBAR_SECTIONS: Record<string, string[]> = {
     "content_documents",
     "settings",
     "settings_cities",
+    "settings_certificates",
     "portal_users",
   ],
   accountant: ["payments"],

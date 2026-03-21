@@ -129,7 +129,7 @@ export function Sidebar({ mobile }: { mobile?: boolean } = {}) {
                   {item.icon}
                   {item.label}
                 </Link>
-                {isActive && visibleChildren && visibleChildren.length > 0 && (
+                {visibleChildren && visibleChildren.length > 0 && (
                   <div className="ml-7 mt-0.5 space-y-0.5">
                     {visibleChildren.map((child) => (
                       <Link

@@ -13,12 +13,12 @@ function getEffectiveSidebarSections(user: User | null): string[] {
     const role = user.roles[0];
     sections = role ? getSidebarSectionsForRole(role) : [];
   }
-  // Мержим секции из fallback для admin — бэкенд может ещё не возвращать новые (напр. settings_certificates)
-  const role = user.roles[0];
-  if (role === "admin") {
-    const roleSections = getSidebarSectionsForRole(role);
-    const missing = roleSections.filter((s) => !sections.includes(s));
-    if (missing.length > 0) sections = [...sections, ...missing];
+  // Добавляем settings_certificates при любом доступе к настройкам — бэкенд может ещё не возвращать
+  const hasSettingsAccess = sections.some(
+    (s) => s === "settings" || s.startsWith("settings_")
+  );
+  if (hasSettingsAccess && !sections.includes("settings_certificates")) {
+    sections = [...sections, "settings_certificates"];
   }
   return sections;
 }
