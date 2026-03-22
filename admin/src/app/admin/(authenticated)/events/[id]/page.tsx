@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
-import type { EventDetail, EventRegistration, RegistrationListResponse, Receipt } from "@/types";
+import type { EventDetail, EventRegistration, RegistrationListResponse } from "@/types";
 import { DetailSkeleton } from "@/components/shared/DetailSkeleton";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -13,27 +13,16 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ReceiptDialog } from "@/components/features/payments/ReceiptDialog";
-import { ArrowLeft, Pencil, Users, CheckCircle, Clock, DollarSign, ImageIcon, Video, Upload, Copy, Receipt as ReceiptIcon } from "lucide-react";
+import { ArrowLeft, Pencil, Users, CheckCircle, Clock, DollarSign, ImageIcon, Video, Upload, Copy } from "lucide-react";
 import { format } from "date-fns";
 import { ColumnDef } from "@tanstack/react-table";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [regPage, setRegPage] = useState(1);
   const [regStatusFilter, setRegStatusFilter] = useState<string>("all");
-  const [receiptOpen, setReceiptOpen] = useState(false);
-  const [receiptData, setReceiptData] = useState<Receipt[] | null>(null);
-
-  const openReceipt = useCallback(async (paymentId: string) => {
-    try {
-      const { data } = await api.get(`/subscriptions/payments/${paymentId}/receipt`);
-      setReceiptData(Array.isArray(data) ? data : [data]);
-      setReceiptOpen(true);
-    } catch { /* handled by interceptor */ }
-  }, []);
 
   const regColumns = useMemo<ColumnDef<EventRegistration>[]>(() => [
     {
@@ -77,25 +66,21 @@ export default function EventDetailPage() {
       cell: ({ row }) => {
         const p = row.original.payment;
         if (!p) return "—";
+        const paymentUrl = p.payment_url || p.external_payment_url;
         return (
           <div className="flex flex-col gap-1">
             <StatusBadge status={p.status} />
-            {p.status === "pending" && p.payment_url && (
+            {p.status === "pending" && paymentUrl && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-7"
                 onClick={() => {
-                  navigator.clipboard.writeText(p.payment_url!);
+                  navigator.clipboard.writeText(paymentUrl);
                   toast.success("Ссылка скопирована");
                 }}
               >
                 <Copy className="mr-1 h-3 w-3" /> Копировать ссылку
-              </Button>
-            )}
-            {(p.status === "succeeded" || p.status === "partially_refunded") && p.has_receipt && (
-              <Button variant="ghost" size="sm" className="h-7" onClick={() => openReceipt(p.id)} title="Чек">
-                <ReceiptIcon className="mr-1 h-3 w-3" /> Чек
               </Button>
             )}
           </div>
@@ -107,7 +92,7 @@ export default function EventDetailPage() {
       header: "Дата регистрации",
       cell: ({ row }) => format(new Date(row.original.created_at), "dd.MM.yyyy HH:mm"),
     },
-  ], [openReceipt]);
+  ], []);
 
   const { data: event, isLoading, error, refetch } = useQuery<EventDetail>({
     queryKey: ["event", id],
@@ -299,8 +284,6 @@ export default function EventDetailPage() {
           />
         </CardContent>
       </Card>
-
-      <ReceiptDialog open={receiptOpen} onOpenChange={setReceiptOpen} receipts={receiptData} />
     </div>
   );
 }

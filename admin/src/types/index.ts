@@ -199,6 +199,7 @@ export interface EventRegistration {
     id: string;
     status: string;
     payment_url?: string | null;
+    external_payment_url?: string | null;
     has_receipt?: boolean;
     paid_at?: string | null;
   };
