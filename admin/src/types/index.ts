@@ -136,6 +136,8 @@ export interface PaymentItem {
   has_receipt?: boolean;
   paid_at: string | null;
   created_at: string;
+  event_registration_id?: string | null;
+  event?: { id: string; title: string };
 }
 
 export interface PaymentsSummary {
@@ -186,12 +188,20 @@ export interface EventTariff {
 
 export interface EventRegistration {
   id: string;
-  user: { id: string; email: string; full_name?: string };
+  user?: { id: string; email: string; full_name?: string };
+  guest_email?: string | null;
   tariff: { id: string; name: string };
   applied_price: number;
   is_member_price: boolean;
   status: string;
   created_at: string;
+  payment?: {
+    id: string;
+    status: string;
+    payment_url?: string | null;
+    has_receipt?: boolean;
+    paid_at?: string | null;
+  };
 }
 
 export interface RegistrationSummary {

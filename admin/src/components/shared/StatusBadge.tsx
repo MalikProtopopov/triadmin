@@ -12,7 +12,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: Variant; className
   rejected: { label: "Отклонён", variant: "destructive" },
   active: { label: "Активна", variant: "outline", className: "border-green-500 text-green-700 bg-green-50" },
   deactivated: { label: "Деактивирован", variant: "secondary" },
-  expired: { label: "Истекла", variant: "destructive" },
+  expired: { label: "Истёк", variant: "secondary" },
   expiring_soon: { label: "Истекает", variant: "outline", className: "border-orange-500 text-orange-700 bg-orange-50" },
   never: { label: "Нет подписки", variant: "secondary" },
   none: { label: "Нет подписки", variant: "secondary" },

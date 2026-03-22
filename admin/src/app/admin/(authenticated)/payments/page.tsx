@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import type { DateRange } from "react-day-picker";
@@ -19,7 +20,7 @@ import { RefundModal } from "@/components/features/payments/RefundModal";
 import { CancelPaymentModal } from "@/components/features/payments/CancelPaymentModal";
 import { ManualPaymentModal } from "@/components/features/payments/ManualPaymentModal";
 import { Input } from "@/components/ui/input";
-import { Receipt as ReceiptIcon, X, Plus, RotateCcw, ArrowUp, ArrowDown, Copy, XCircle, CheckCircle } from "lucide-react";
+import { Receipt as ReceiptIcon, X, Plus, RotateCcw, ArrowUp, ArrowDown, Copy, XCircle, CheckCircle, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { totalPages } from "@/lib/pagination";
@@ -131,6 +132,31 @@ function PaymentsContent() {
         accessorKey: "product_type",
         header: "Тип",
         cell: ({ row }) => <StatusBadge status={row.original.product_type} />,
+      },
+      {
+        id: "event_link",
+        header: "Связь",
+        cell: ({ row }) => {
+          const p = row.original;
+          if (p.product_type !== "event") return null;
+          if (p.event?.id) {
+            return (
+              <Button asChild variant="ghost" size="sm" className="h-7">
+                <Link href={`/admin/events/${p.event.id}`}>
+                  <CalendarDays className="mr-1 h-3 w-3" /> Мероприятие
+                </Link>
+              </Button>
+            );
+          }
+          if (p.event_registration_id) {
+            return (
+              <span className="text-xs text-muted-foreground" title={`Регистрация: ${p.event_registration_id}`}>
+                ID регистрации
+              </span>
+            );
+          }
+          return null;
+        },
       },
       {
         accessorKey: "amount",

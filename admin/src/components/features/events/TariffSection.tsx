@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Loader2, Plus, Trash2, Pencil } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 interface TariffFormData {
@@ -26,11 +27,13 @@ interface TariffFormData {
   benefits: string[];
   seats_limit: number | null;
   sort_order: number | "";
+  is_active: boolean;
 }
 
 const EMPTY_TARIFF: TariffFormData = {
   name: "", description: "", conditions: "", details: "",
   price: "", member_price: "", benefits: [], seats_limit: null, sort_order: "",
+  is_active: true,
 };
 
 interface TariffSectionProps {
@@ -66,6 +69,7 @@ export function TariffSection({ eventId, tariffs, isEditing }: TariffSectionProp
       benefits: t.benefits,
       seats_limit: t.seats_limit,
       sort_order: t.sort_order ?? 0,
+      is_active: t.is_active !== false,
     });
     setModalOpen(true);
   }
@@ -77,7 +81,7 @@ export function TariffSection({ eventId, tariffs, isEditing }: TariffSectionProp
     }
     setSaving(true);
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         name: form.name,
         description: form.description || null,
         conditions: form.conditions || null,
@@ -89,6 +93,7 @@ export function TariffSection({ eventId, tariffs, isEditing }: TariffSectionProp
         sort_order: form.sort_order === "" ? 0 : form.sort_order,
       };
       if (editingId) {
+        payload.is_active = form.is_active;
         await api.patch(`/admin/events/${eventId}/tariffs/${editingId}`, payload);
         toast.success("Тариф обновлён");
       } else {
@@ -211,6 +216,16 @@ export function TariffSection({ eventId, tariffs, isEditing }: TariffSectionProp
                 <Input type="number" placeholder="0" value={form.sort_order} onChange={(e) => setForm((p) => ({ ...p, sort_order: e.target.value === "" ? "" : Number(e.target.value) }))} />
               </div>
             </div>
+            {editingId && (
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="tariff-is_active"
+                  checked={form.is_active}
+                  onCheckedChange={(checked) => setForm((p) => ({ ...p, is_active: checked === true }))}
+                />
+                <Label htmlFor="tariff-is_active" className="text-sm font-normal">Тариф активен (доступен для покупки)</Label>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Преимущества</Label>
               <div className="space-y-2">

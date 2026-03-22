@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
-import type { EventDetail, EventRegistration, RegistrationListResponse } from "@/types";
+import type { EventDetail, EventRegistration, RegistrationListResponse, Receipt } from "@/types";
 import { DetailSkeleton } from "@/components/shared/DetailSkeleton";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -13,45 +13,101 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Pencil, Users, CheckCircle, Clock, DollarSign, ImageIcon, Video, Upload } from "lucide-react";
+import { ReceiptDialog } from "@/components/features/payments/ReceiptDialog";
+import { ArrowLeft, Pencil, Users, CheckCircle, Clock, DollarSign, ImageIcon, Video, Upload, Copy, Receipt as ReceiptIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ColumnDef } from "@tanstack/react-table";
-import { useState } from "react";
-
-const regColumns: ColumnDef<EventRegistration>[] = [
-  {
-    accessorKey: "user",
-    header: "Участник",
-    cell: ({ row }) => (
-      <div>
-        <p className="font-medium text-sm">{row.original.user.full_name}</p>
-        <p className="text-xs text-muted-foreground">{row.original.user.email}</p>
-      </div>
-    ),
-  },
-  { accessorKey: "tariff", header: "Тариф", cell: ({ row }) => row.original.tariff.name },
-  {
-    accessorKey: "applied_price",
-    header: "Сумма",
-    cell: ({ row }) => (
-      <span>
-        {row.original.applied_price.toLocaleString("ru-RU")} ₽
-        {row.original.is_member_price && <StatusBadge status="active" label="чл." className="ml-1" />}
-      </span>
-    ),
-  },
-  { accessorKey: "status", header: "Статус", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
-  {
-    accessorKey: "created_at",
-    header: "Дата регистрации",
-    cell: ({ row }) => format(new Date(row.original.created_at), "dd.MM.yyyy HH:mm"),
-  },
-];
+import { useState, useMemo, useCallback } from "react";
+import { toast } from "sonner";
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [regPage, setRegPage] = useState(1);
   const [regStatusFilter, setRegStatusFilter] = useState<string>("all");
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receiptData, setReceiptData] = useState<Receipt[] | null>(null);
+
+  const openReceipt = useCallback(async (paymentId: string) => {
+    try {
+      const { data } = await api.get(`/subscriptions/payments/${paymentId}/receipt`);
+      setReceiptData(Array.isArray(data) ? data : [data]);
+      setReceiptOpen(true);
+    } catch { /* handled by interceptor */ }
+  }, []);
+
+  const regColumns = useMemo<ColumnDef<EventRegistration>[]>(() => [
+    {
+      accessorKey: "user",
+      header: "Участник",
+      cell: ({ row }) => {
+        const r = row.original;
+        if (r.guest_email) {
+          return (
+            <div>
+              <p className="font-medium text-sm">Гость</p>
+              <p className="text-xs text-muted-foreground">{r.guest_email}</p>
+            </div>
+          );
+        }
+        const u = r.user;
+        if (!u) return "—";
+        return (
+          <div>
+            <p className="font-medium text-sm">{u.full_name || "—"}</p>
+            <p className="text-xs text-muted-foreground">{u.email}</p>
+          </div>
+        );
+      },
+    },
+    { accessorKey: "tariff", header: "Тариф", cell: ({ row }) => row.original.tariff.name },
+    {
+      accessorKey: "applied_price",
+      header: "Сумма",
+      cell: ({ row }) => (
+        <span>
+          {row.original.applied_price.toLocaleString("ru-RU")} ₽
+          {row.original.is_member_price && <StatusBadge status="active" label="чл." className="ml-1" />}
+        </span>
+      ),
+    },
+    { accessorKey: "status", header: "Статус", cell: ({ row }) => <StatusBadge status={row.original.status} /> },
+    {
+      id: "payment",
+      header: "Платёж",
+      cell: ({ row }) => {
+        const p = row.original.payment;
+        if (!p) return "—";
+        return (
+          <div className="flex flex-col gap-1">
+            <StatusBadge status={p.status} />
+            {p.status === "pending" && p.payment_url && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7"
+                onClick={() => {
+                  navigator.clipboard.writeText(p.payment_url!);
+                  toast.success("Ссылка скопирована");
+                }}
+              >
+                <Copy className="mr-1 h-3 w-3" /> Копировать ссылку
+              </Button>
+            )}
+            {(p.status === "succeeded" || p.status === "partially_refunded") && p.has_receipt && (
+              <Button variant="ghost" size="sm" className="h-7" onClick={() => openReceipt(p.id)} title="Чек">
+                <ReceiptIcon className="mr-1 h-3 w-3" /> Чек
+              </Button>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: "Дата регистрации",
+      cell: ({ row }) => format(new Date(row.original.created_at), "dd.MM.yyyy HH:mm"),
+    },
+  ], [openReceipt]);
 
   const { data: event, isLoading, error, refetch } = useQuery<EventDetail>({
     queryKey: ["event", id],
@@ -243,6 +299,8 @@ export default function EventDetailPage() {
           />
         </CardContent>
       </Card>
+
+      <ReceiptDialog open={receiptOpen} onOpenChange={setReceiptOpen} receipts={receiptData} />
     </div>
   );
 }
