@@ -13,12 +13,13 @@ function getEffectiveSidebarSections(user: User | null): string[] {
     const role = user.roles[0];
     sections = role ? getSidebarSectionsForRole(role) : [];
   }
-  // Добавляем settings_certificates при любом доступе к настройкам — бэкенд может ещё не возвращать
+  // Добавляем settings_certificates и settings_telegram при доступе к настройкам — бэкенд может ещё не возвращать
   const hasSettingsAccess = sections.some(
     (s) => s === "settings" || s.startsWith("settings_")
   );
-  if (hasSettingsAccess && !sections.includes("settings_certificates")) {
-    sections = [...sections, "settings_certificates"];
+  const toMerge = ["settings_certificates", "settings_telegram"];
+  for (const sec of toMerge) {
+    if (hasSettingsAccess && !sections.includes(sec)) sections = [...sections, sec];
   }
   return sections;
 }
