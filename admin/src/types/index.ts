@@ -12,6 +12,7 @@ export type NotificationType = "reminder" | "payment" | "moderation" | "manual";
 export type NotificationChannel = "email" | "telegram" | "both";
 export type ContentBlockType = "text" | "image" | "video" | "gallery" | "link";
 export type DeviceType = "both" | "mobile" | "desktop";
+export type BoardRole = "pravlenie" | "president";
 
 export interface User {
   id: string;
@@ -58,6 +59,9 @@ export interface DoctorListItem {
   has_medical_diploma: boolean;
   has_pending_changes: boolean;
   has_photo_in_draft?: boolean;
+  telegram_linked?: boolean;
+  tg_username?: string | null;
+  board_role?: BoardRole | null;
   subscription: {
     id?: string | null;
     status: string | null;
@@ -353,7 +357,7 @@ export interface UpdateTelegramIntegrationRequest {
 export interface VotingSession {
   id: string;
   title: string;
-  description: string | null;
+  description?: string | null;
   status: VotingStatus;
   starts_at: string;
   ends_at: string;
@@ -435,6 +439,9 @@ export interface PortalUserListItem {
   role_display: string | null;
   onboarding_status?: string | null;
   doctor_profile_id?: string | null;
+  telegram_linked?: boolean;
+  tg_username?: string | null;
+  board_role?: BoardRole | null;
   subscription?: {
     id?: string;
     status: string;

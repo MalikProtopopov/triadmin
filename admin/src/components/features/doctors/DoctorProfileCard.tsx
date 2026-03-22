@@ -1,14 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import type { DoctorDetail } from "@/types";
+import { useMutation } from "@tanstack/react-query";
+import api from "@/lib/api";
+import type { BoardRole, DoctorDetail } from "@/types";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Check, X, Power, PowerOff, Mail, Bell, FileWarning, ImageIcon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Check, X, Power, PowerOff, Mail, Bell, FileWarning, ImageIcon, Send, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { buildMediaUrl } from "@/lib/media";
 import { ContentBlocksEditor } from "@/components/shared/ContentBlocksEditor";
 import { DoctorModals } from "./DoctorModals";
@@ -46,6 +51,12 @@ interface DoctorProfileCardProps {
   onInvalidate: () => void;
 }
 
+const BOARD_ROLE_OPTIONS: { value: string; label: string }[] = [
+  { value: "none", label: "—" },
+  { value: "pravlenie", label: "Правление" },
+  { value: "president", label: "Президент" },
+];
+
 export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardProps) {
   const [approveOpen, setApproveOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -54,6 +65,15 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
   const [toggleOpen, setToggleOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
+
+  const updateBoardRole = useMutation({
+    mutationFn: (board_role: BoardRole | null) =>
+      api.patch(`/admin/doctors/${doctor.id}`, { board_role }),
+    onSuccess: () => {
+      onInvalidate();
+      toast.success("Роль в правлении обновлена");
+    },
+  });
 
   const fullName = `${doctor.last_name} ${doctor.first_name} ${doctor.middle_name || ""}`.trim();
   const isPending = doctor.moderation_status === "pending_review";
@@ -82,7 +102,40 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
                   {doctor.subscription?.status && <StatusBadge status={doctor.subscription.status} />}
                   {doctor.is_public !== undefined && <StatusBadge status={doctor.is_public ? "active" : "deactivated"} label={doctor.is_public ? "Публичный" : "Скрыт"} />}
                 </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <Label className="text-xs text-muted-foreground shrink-0">Роль в правлении</Label>
+                  <Select
+                    value={doctor.board_role ?? "none"}
+                    onValueChange={(v) => {
+                      const role = v === "none" ? null : (v as BoardRole);
+                      updateBoardRole.mutate(role);
+                    }}
+                    disabled={updateBoardRole.isPending}
+                  >
+                    <SelectTrigger className="w-40 h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BOARD_ROLE_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {updateBoardRole.isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">{doctor.city?.name} {doctor.specialization ? `• ${doctor.specialization}` : ""}</p>
+                {doctor.telegram_linked && doctor.tg_username && (
+                  <p className="text-xs mt-0.5">
+                    <a
+                      href={`https://t.me/${doctor.tg_username}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#0088cc] hover:underline inline-flex items-center gap-1"
+                    >
+                      <Send className="h-3 w-3" /> @{doctor.tg_username}
+                    </a>
+                  </p>
+                )}
               </div>
             </div>
 

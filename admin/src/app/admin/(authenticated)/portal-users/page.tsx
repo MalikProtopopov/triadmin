@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SortableHeader } from "@/components/shared/SortableHeader";
-import { Eye, X, Upload } from "lucide-react";
+import { Eye, X, Upload, Send } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useSidebarSections } from "@/hooks/useSidebarSections";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -72,6 +72,29 @@ function getColumns(
           );
         }
         return <span className="text-muted-foreground text-sm">Зарегистрирован</span>;
+      },
+    },
+    {
+      accessorKey: "telegram_linked",
+      header: "Telegram",
+      cell: ({ row }) => {
+        const d = row.original;
+        if (!d.telegram_linked || !d.tg_username) return "—";
+        return (
+          <span className="inline-flex items-center gap-1" title={`@${d.tg_username}`}>
+            <Send className="h-3.5 w-3.5 text-[#0088cc]" />
+            @{d.tg_username}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: "board_role",
+      header: "Правление",
+      cell: ({ row }) => {
+        const br = row.original.board_role;
+        if (!br) return "—";
+        return <Badge variant="outline">{br === "pravlenie" ? "Правление" : "Президент"}</Badge>;
       },
     },
     {

@@ -10,13 +10,14 @@ import type { DoctorListItem, PaginatedResponse, City } from "@/types";
 import { DataTable } from "@/components/shared/DataTable";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { Badge } from "@/components/ui/badge";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SortableHeader } from "@/components/shared/SortableHeader";
-import { Eye, X, FileEdit, GraduationCap, ImageIcon } from "lucide-react";
+import { Eye, X, FileEdit, GraduationCap, ImageIcon, Send } from "lucide-react";
 import { CreateDoctorModal } from "@/components/features/doctors/CreateDoctorModal";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -59,6 +60,29 @@ function getColumns(sorting: SortingState, onSort: (id: string) => void): Column
         ? `${sub.status === "active" ? "до" : ""} ${format(new Date(sub.ends_at), "dd.MM.yyyy")}`
         : undefined;
       return <StatusBadge status={sub.status} label={label} />;
+    },
+  },
+  {
+    accessorKey: "board_role",
+    header: "Правление",
+    cell: ({ row }) => {
+      const br = row.original.board_role;
+      if (!br) return "—";
+      return <Badge variant="outline">{br === "pravlenie" ? "Правление" : "Президент"}</Badge>;
+    },
+  },
+  {
+    accessorKey: "telegram_linked",
+    header: "Telegram",
+    cell: ({ row }) => {
+      const d = row.original;
+      if (!d.telegram_linked || !d.tg_username) return "—";
+      return (
+        <span className="inline-flex items-center gap-1" title={`@${d.tg_username}`}>
+          <Send className="h-3.5 w-3.5 text-[#0088cc]" />
+          @{d.tg_username}
+        </span>
+      );
     },
   },
   {
@@ -124,6 +148,9 @@ function DoctorsListContent() {
   const [cityId, setCityId] = useState(searchParams.get("city_id") || "all");
   const [specialization, setSpecialization] = useState(searchParams.get("specialization") || "all");
   const [hasPendingDraft, setHasPendingDraft] = useState(searchParams.get("has_data_changed") === "true");
+  const [boardRole, setBoardRole] = useState<"all" | "pravlenie" | "president">(
+    (searchParams.get("board_role") as "all" | "pravlenie" | "president" | null) || "all"
+  );
   const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
   const [perPage, setPerPage] = useState(20);
   const [sorting, setSorting] = useState<SortingState>([
@@ -135,6 +162,9 @@ function DoctorsListContent() {
 
   useEffect(() => {
     setHasPendingDraft(searchParams.get("has_data_changed") === "true");
+    const br = searchParams.get("board_role");
+    if (br === "pravlenie" || br === "president") setBoardRole(br);
+    else setBoardRole("all");
   }, [searchParams]);
 
   const params = new URLSearchParams();
@@ -146,6 +176,7 @@ function DoctorsListContent() {
   if (cityId !== "all") params.set("city_id", cityId);
   if (specialization !== "all") params.set("specialization", specialization);
   if (hasPendingDraft) params.set("has_data_changed", "true");
+  if (boardRole !== "all") params.append("board_role", boardRole);
   const sortBy = sorting[0]?.id || "created_at";
   const sortOrder = sorting[0]?.desc ? "desc" : "asc";
   params.set("sort_by", sortBy);
@@ -180,7 +211,7 @@ function DoctorsListContent() {
     return Array.from(set).sort();
   }, [specializationsData?.data]);
 
-  const hasFilters = search || status !== "all" || subscriptionStatus !== "all" || cityId !== "all" || specialization !== "all" || hasPendingDraft;
+  const hasFilters = search || status !== "all" || subscriptionStatus !== "all" || cityId !== "all" || specialization !== "all" || hasPendingDraft || boardRole !== "all";
 
   function resetFilters() {
     setSearch("");
@@ -189,6 +220,7 @@ function DoctorsListContent() {
     setCityId("all");
     setSpecialization("all");
     setHasPendingDraft(false);
+    setBoardRole("all");
     setPage(1);
   }
 
@@ -267,6 +299,16 @@ function DoctorsListContent() {
             {specializations.map((s) => (
               <SelectItem key={s} value={s}>{s}</SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select value={boardRole} onValueChange={(v) => { setBoardRole(v as "all" | "pravlenie" | "president"); setPage(1); }}>
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="Роль в правлении" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все</SelectItem>
+            <SelectItem value="pravlenie">Правление</SelectItem>
+            <SelectItem value="president">Президент</SelectItem>
           </SelectContent>
         </Select>
         <div className="flex items-center gap-2">

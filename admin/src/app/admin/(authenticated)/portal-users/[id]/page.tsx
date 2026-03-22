@@ -72,6 +72,23 @@ export default function PortalUserDetailPage() {
                 <dd>{user.is_verified ? "Да" : "Нет"}</dd>
               </div>
               <div><dt className="text-muted-foreground">Дата регистрации</dt><dd>{format(new Date(user.created_at), "dd.MM.yyyy HH:mm", { locale: ru })}</dd></div>
+              <div>
+                <dt className="text-muted-foreground">Telegram</dt>
+                <dd>
+                  {user.telegram_linked && user.tg_username ? (
+                    <a
+                      href={`https://t.me/${user.tg_username}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#0088cc] hover:underline inline-flex items-center gap-1"
+                    >
+                      @{user.tg_username} <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ) : (
+                    "Не привязан"
+                  )}
+                </dd>
+              </div>
               {user.onboarding_status && (
                 <div><dt className="text-muted-foreground">Онбординг</dt><dd>{user.onboarding_status}</dd></div>
               )}
@@ -98,6 +115,12 @@ export default function PortalUserDetailPage() {
                 <div>
                   <span className="text-muted-foreground">Статус профиля: </span>
                   <StatusBadge status={user.doctor_profile_status} label={STATUS_LABELS[user.doctor_profile_status] || user.doctor_profile_status} />
+                </div>
+              )}
+              {user.board_role && (
+                <div>
+                  <span className="text-muted-foreground">Роль в правлении: </span>
+                  <Badge variant="outline">{user.board_role === "pravlenie" ? "Правление" : "Президент"}</Badge>
                 </div>
               )}
               <Button asChild variant="outline" size="sm">

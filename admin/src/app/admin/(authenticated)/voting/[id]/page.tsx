@@ -167,7 +167,7 @@ export default function VotingDetailPage() {
             <XCircle className="mr-2 h-4 w-4" /> Отменить
           </Button>
         )}
-        {s.status === "draft" && (
+        {(s.status === "draft" || s.status === "active") && (
           <Button
             variant="outline"
             onClick={() => {
@@ -191,9 +191,17 @@ export default function VotingDetailPage() {
         )}
         {(s.status === "active" || s.status === "closed") && (
           <Button variant="outline" asChild>
-            <Link href={`/voting/${id}`} target="_blank" rel="noreferrer">
+            <a
+              href={
+                process.env.NEXT_PUBLIC_PORTAL_URL
+                  ? `${process.env.NEXT_PUBLIC_PORTAL_URL.replace(/\/$/, "")}/voting/${id}`
+                  : `/voting/${id}`
+              }
+              target="_blank"
+              rel="noreferrer"
+            >
               <ExternalLink className="mr-2 h-4 w-4" /> Посмотреть на сайте
-            </Link>
+            </a>
           </Button>
         )}
       </div>
@@ -245,7 +253,7 @@ export default function VotingDetailPage() {
       {s.status === "active" && (
         <Card className="border-blue-200 bg-blue-50/50">
           <CardContent className="pt-4 text-sm text-muted-foreground">
-            После окончания срока ({format(new Date(s.ends_at), "dd.MM.yyyy HH:mm")}) голосование перестаёт принимать голоса. Рекомендуется вручную перевести в «Завершено» для фиксации результатов.
+            Сессии с истёкшим сроком ({format(new Date(s.ends_at), "dd.MM.yyyy HH:mm")}) закрываются автоматически. Можно также завершить голосование вручную досрочно.
           </CardContent>
         </Card>
       )}
@@ -297,7 +305,7 @@ export default function VotingDetailPage() {
                 <div key={r.candidate.id} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">{r.candidate.full_name}</span>
-                    <span>{r.votes_count} ({r.percentage.toFixed(1)}%)</span>
+                    <span>{r.votes_count} ({r.percentage.toFixed(2)}%)</span>
                   </div>
                   <Progress value={r.percentage} className="h-2" />
                 </div>
