@@ -324,6 +324,32 @@ export interface SiteSettings {
   [key: string]: unknown;
 }
 
+export interface TelegramIntegration {
+  id: number;
+  bot_username: string | null;
+  owner_chat_id: number | null;
+  webhook_url: string | null;
+  is_webhook_active: boolean;
+  is_active: boolean;
+  welcome_message: string | null;
+  bot_token_masked: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateTelegramIntegrationRequest {
+  bot_token: string;
+  owner_chat_id: number;
+  welcome_message?: string;
+}
+
+export interface UpdateTelegramIntegrationRequest {
+  bot_token?: string;
+  owner_chat_id?: number;
+  is_active?: boolean;
+  welcome_message?: string | null;
+}
+
 export interface VotingSession {
   id: string;
   title: string;

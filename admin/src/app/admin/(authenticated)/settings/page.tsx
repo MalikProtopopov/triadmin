@@ -94,16 +94,6 @@ export default function GeneralSettingsPage() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Telegram</CardTitle></CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label>Ссылка на бот</Label>
-            <Input {...register("telegram_bot_link")} placeholder="https://t.me/..." />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
         <CardHeader><CardTitle className="text-base">Hero-блок главной страницы</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">

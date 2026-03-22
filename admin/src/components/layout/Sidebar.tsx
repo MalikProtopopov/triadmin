@@ -61,6 +61,7 @@ const NAV_ITEMS: NavItem[] = [
       { label: "Города", href: "/admin/settings/cities", section: "settings_cities" },
       { label: "Тарифы", href: "/admin/settings/plans", section: "settings_plans" },
       { label: "SEO", href: "/admin/settings/seo", section: "settings_seo" },
+      { label: "Telegram", href: "/admin/settings/telegram", section: "settings_telegram" },
       { label: "Сертификаты", href: "/admin/settings/certificates", section: "settings_certificates" },
     ],
   },
