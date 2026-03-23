@@ -23,7 +23,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { DetailSkeleton } from "@/components/shared/DetailSkeleton";
 import { ErrorState } from "@/components/shared/ErrorState";
-import { ArrowLeft, Play, Square, XCircle, BarChart3, ExternalLink, Pencil } from "lucide-react";
+import { ArrowLeft, Play, Square, XCircle, BarChart3, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -187,21 +187,6 @@ export default function VotingDetailPage() {
         {s.status === "active" && (
           <Button variant="destructive" onClick={() => setActionTarget("cancelled")}>
             <XCircle className="mr-2 h-4 w-4" /> Отменить
-          </Button>
-        )}
-        {(s.status === "active" || s.status === "closed") && (
-          <Button variant="outline" asChild>
-            <a
-              href={
-                process.env.NEXT_PUBLIC_PORTAL_URL
-                  ? `${process.env.NEXT_PUBLIC_PORTAL_URL.replace(/\/$/, "")}/voting/${id}`
-                  : `/voting/${id}`
-              }
-              target="_blank"
-              rel="noreferrer"
-            >
-              <ExternalLink className="mr-2 h-4 w-4" /> Посмотреть на сайте
-            </a>
           </Button>
         )}
       </div>
