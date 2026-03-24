@@ -55,6 +55,15 @@ function getColumns(
       },
     },
     {
+      accessorKey: "specialization",
+      header: "Специализация",
+      cell: ({ row }) => {
+        const d = row.original;
+        if (d.role !== "doctor") return "—";
+        return d.specialization?.trim() ? d.specialization.trim() : "—";
+      },
+    },
+    {
       accessorKey: "status",
       header: "Статус",
       cell: ({ row }) => {

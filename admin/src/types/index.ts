@@ -439,6 +439,8 @@ export interface PortalUserListItem {
   role_display: string | null;
   onboarding_status?: string | null;
   doctor_profile_id?: string | null;
+  /** Текст специализации из профиля врача; для не-врачей или без профиля — null */
+  specialization?: string | null;
   telegram_linked?: boolean;
   tg_username?: string | null;
   board_role?: BoardRole | null;

@@ -196,7 +196,7 @@ function DoctorsListContent() {
       }),
   });
 
-  // TODO: Заменить на GET /admin/specializations, когда бэкенд добавит эндпоинт. Сейчас workaround — уникальные строки из GET /admin/doctors (limit 200). План: api_plan_verification.
+  // Список значений фильтра: уникальные текстовые specialization из выборки GET /admin/doctors (limit=100 ниже — список может быть неполным; при необходимости увеличить limit или пагинировать).
   const { data: specializationsData } = useQuery<PaginatedResponse<DoctorListItem>>({
     queryKey: ["doctors-specializations"],
     queryFn: () =>

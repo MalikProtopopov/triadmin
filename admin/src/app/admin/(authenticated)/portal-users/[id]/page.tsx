@@ -123,6 +123,10 @@ export default function PortalUserDetailPage() {
                   <Badge variant="outline">{user.board_role === "pravlenie" ? "Правление" : "Президент"}</Badge>
                 </div>
               )}
+              <div>
+                <span className="text-muted-foreground">Специализация: </span>
+                <span>{user.specialization?.trim() || "—"}</span>
+              </div>
               <Button asChild variant="outline" size="sm">
                 <Link href={`/admin/doctors/${user.doctor_profile_id}`}>
                   <ExternalLink className="mr-1 h-3 w-3" /> Перейти к профилю врача

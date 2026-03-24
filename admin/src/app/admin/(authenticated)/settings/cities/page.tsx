@@ -30,7 +30,12 @@ export default function CitiesPage() {
 
   const { data: cities, isLoading, error, refetch } = useQuery<City[]>({
     queryKey: ["admin-cities"],
-    queryFn: () => api.get("/admin/cities").then((r) => r.data.data || r.data),
+    queryFn: () =>
+      api.get("/admin/cities").then((r) => {
+        const d = r.data;
+        const raw = d?.data ?? d;
+        return Array.isArray(raw) ? raw : [];
+      }),
   });
 
   const createCity = useMutation({
@@ -103,7 +108,7 @@ export default function CitiesPage() {
   if (isLoading) return <TableSkeleton rows={5} cols={3} />;
   if (error) return <ErrorState onRetry={refetch} />;
 
-  const sorted = [...(cities || [])].sort((a, b) => a.sort_order - b.sort_order);
+  const sorted = [...(cities || [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
   return (
     <div className="space-y-4">
@@ -148,7 +153,7 @@ export default function CitiesPage() {
                   )}
                 </div>
                 <Switch
-                  checked={city.is_active}
+                  checked={city.is_active !== false}
                   onCheckedChange={(v) => toggleCity.mutate({ id: city.id, is_active: v })}
                   className="shrink-0"
                 />

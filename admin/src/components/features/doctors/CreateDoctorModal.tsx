@@ -5,8 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-// TODO: Add specialization_ids field to form when GET /admin/specializations exists.
-// POST /admin/doctors accepts specialization_ids: UUID[]. Without the list endpoint we cannot provide IDs.
 import { toast } from "sonner";
 import { UserPlus, Loader2, Copy, ChevronDown, ChevronUp } from "lucide-react";
 import api from "@/lib/api";
@@ -45,6 +43,7 @@ const schema = z.object({
   middle_name: z.string().optional(),
   city_id: z.string().optional(),
   clinic_name: z.string().optional(),
+  specialization: z.string().max(255, "Не более 255 символов").optional(),
   position: z.string().optional(),
   academic_degree: z.string().optional(),
   bio: z.string().optional(),
@@ -115,6 +114,9 @@ export function CreateDoctorModal({ onCreated }: Props) {
       if (!payload.middle_name) delete payload.middle_name;
       if (!payload.city_id) delete payload.city_id;
       if (!payload.clinic_name) delete payload.clinic_name;
+      if (!payload.specialization || !String(payload.specialization).trim()) {
+        delete payload.specialization;
+      }
       if (!payload.position) delete payload.position;
       if (!payload.academic_degree) delete payload.academic_degree;
       if (!payload.bio) delete payload.bio;
@@ -341,6 +343,19 @@ export function CreateDoctorModal({ onCreated }: Props) {
                       id="cd-clinic"
                       {...register("clinic_name")}
                     />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cd-specialization">Специализация</Label>
+                    <Input
+                      id="cd-specialization"
+                      placeholder="Например, кардиолог"
+                      {...register("specialization")}
+                    />
+                    {errors.specialization && (
+                      <p className="text-xs text-destructive">
+                        {errors.specialization.message}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="cd-position">Должность</Label>
