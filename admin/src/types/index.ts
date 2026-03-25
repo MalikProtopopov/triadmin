@@ -504,7 +504,7 @@ export interface DashboardData {
   arrears_waived_count?: number;
 }
 
-/** Строка задолженности (админ API) */
+/** Строка задолженности — GET /admin/arrears (ArrearResponse) */
 export interface ArrearItem {
   id: string;
   user_id: string;
@@ -514,7 +514,14 @@ export interface ArrearItem {
   status: ArrearStatus;
   source?: ArrearSource | null;
   description?: string | null;
+  /** Внутренняя заметка (API) */
+  admin_note?: string | null;
+  /** Легаси/альтернативное имя в ответе */
   note?: string | null;
+  escalation_level?: string | null;
+  created_by?: string | null;
+  payment_id?: string | null;
+  paid_at?: string | null;
   created_at: string;
   updated_at?: string | null;
   waived_at?: string | null;
@@ -540,6 +547,8 @@ export interface CreateArrearRequest {
   amount: number;
   year?: number;
   description?: string;
+  /** Внутренняя заметка (предпочтительно, если так в OpenAPI) */
+  admin_note?: string;
   note?: string;
   source?: string;
 }
@@ -548,6 +557,7 @@ export interface CreateArrearRequest {
 export interface PatchArrearRequest {
   amount?: number;
   description?: string | null;
+  admin_note?: string | null;
   note?: string | null;
 }
 

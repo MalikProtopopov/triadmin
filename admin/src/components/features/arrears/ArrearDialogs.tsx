@@ -74,10 +74,17 @@ export function CreateArrearDialog({
       user_id: userId,
       amount: a,
       description: description || undefined,
-      note: note || undefined,
+      admin_note: note.trim() || undefined,
     };
-    const y = year.trim() ? parseInt(year, 10) : NaN;
-    if (Number.isFinite(y)) body.year = y;
+    const yearTrim = year.trim();
+    if (yearTrim) {
+      const y = parseInt(yearTrim, 10);
+      if (!Number.isFinite(y) || y < 2000 || y > 2100) {
+        toast.error("Год: укажите число от 2000 до 2100 или оставьте поле пустым");
+        return;
+      }
+      body.year = y;
+    }
     mutation.mutate(body);
   }
 
@@ -123,7 +130,15 @@ export function CreateArrearDialog({
           </div>
           <div className="space-y-2">
             <Label>Год (необязательно)</Label>
-            <Input type="number" value={year} onChange={(e) => setYear(e.target.value)} placeholder="2025" />
+            <Input
+              type="number"
+              min={2000}
+              max={2100}
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              placeholder="2025"
+            />
+            <p className="text-xs text-muted-foreground">Если указан — от 2000 до 2100 (требование API)</p>
           </div>
           <div className="space-y-2">
             <Label>Описание</Label>
@@ -157,7 +172,7 @@ function EditArrearForm({
   const queryClient = useQueryClient();
   const [amount, setAmount] = useState(String(arrear.amount));
   const [description, setDescription] = useState(arrear.description ?? "");
-  const [note, setNote] = useState(arrear.note ?? "");
+  const [note, setNote] = useState(arrear.admin_note ?? arrear.note ?? "");
 
   const mutation = useMutation({
     mutationFn: ({ id, body }: { id: string; body: PatchArrearRequest }) =>
@@ -202,7 +217,7 @@ function EditArrearForm({
               body: {
                 amount: a,
                 description: description || null,
-                note: note || null,
+                admin_note: note || null,
               },
             });
           }}

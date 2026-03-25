@@ -36,6 +36,8 @@ const STATUS_CONFIG: Record<string, { label: string; variant: Variant; className
   open: { label: "Открыт", variant: "outline", className: "border-amber-500 text-amber-800" },
   paid: { label: "Погашен", variant: "outline", className: "border-green-500 text-green-800" },
   waived: { label: "Прощён", variant: "secondary" },
+  manual: { label: "Вручную", variant: "outline" },
+  automatic: { label: "Авто", variant: "outline", className: "border-slate-400" },
   confirmed: { label: "Подтверждено", variant: "outline", className: "border-green-500 text-green-700 bg-green-50" },
   upcoming: { label: "Предстоящее", variant: "outline", className: "border-blue-500 text-blue-700 bg-blue-50" },
   ongoing: { label: "Проходит", variant: "outline", className: "border-green-500 text-green-700 bg-green-50" },

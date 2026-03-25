@@ -8,6 +8,7 @@ import type { ArrearItem, BoardRole, DoctorDetail, PaginatedResponse } from "@/t
 import { useAuth } from "@/hooks/useAuth";
 import { canManageFinance } from "@/lib/roles";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { ErrorState } from "@/components/shared/ErrorState";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,12 +66,27 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
   const user = useAuth((s) => s.user);
   const finance = canManageFinance(user);
 
-  const { data: arrearsData } = useQuery<PaginatedResponse<ArrearItem>>({
-    queryKey: ["arrears", "doctor", doctor.user_id],
-    queryFn: () =>
-      api
-        .get(`/admin/arrears?user_id=${encodeURIComponent(doctor.user_id)}&limit=100`)
-        .then((r) => r.data),
+  const {
+    data: arrearsData,
+    isLoading: arrearsLoading,
+    isError: arrearsError,
+    refetch: refetchArrears,
+  } = useQuery<PaginatedResponse<ArrearItem>>({
+    queryKey: [
+      "arrears",
+      "doctor",
+      doctor.user_id,
+      { limit: 50, offset: 0, include_inactive: true },
+    ],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      params.set("user_id", doctor.user_id);
+      params.set("limit", "50");
+      params.set("offset", "0");
+      params.set("include_inactive", "true");
+      return api.get(`/admin/arrears?${params.toString()}`).then((r) => r.data);
+    },
+    enabled: finance,
   });
 
   const paymentOverrides = useMutation({
@@ -237,7 +253,7 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
               <TabsTrigger value="public">Публичный</TabsTrigger>
               <TabsTrigger value="content">Контентные блоки</TabsTrigger>
               <TabsTrigger value="payments">Платежи</TabsTrigger>
-              <TabsTrigger value="arrears">Задолженности</TabsTrigger>
+              {finance && <TabsTrigger value="arrears">Задолженности</TabsTrigger>}
               <TabsTrigger value="events">Мероприятия</TabsTrigger>
               <TabsTrigger value="certificates">Сертификаты</TabsTrigger>
               <TabsTrigger value="log">Лог</TabsTrigger>
@@ -424,46 +440,88 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
               </Card>
             </TabsContent>
 
+            {finance && (
             <TabsContent value="arrears">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-base">Задолженности</CardTitle>
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/arrears`}>Все долги</Link>
+                    <Link href="/admin/arrears">Все долги</Link>
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  {(arrearsData?.data?.length ?? 0) === 0 ? (
-                    <p className="text-sm text-muted-foreground">Нет записей по долгам</p>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Год</TableHead>
-                          <TableHead>Сумма</TableHead>
-                          <TableHead>Статус</TableHead>
-                          <TableHead>Создано</TableHead>
-                          <TableHead>Комментарий</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {(arrearsData?.data ?? []).map((a) => (
-                          <TableRow key={a.id}>
-                            <TableCell>{a.year ?? "—"}</TableCell>
-                            <TableCell>{a.amount.toLocaleString("ru-RU")} ₽</TableCell>
-                            <TableCell><StatusBadge status={a.status} /></TableCell>
-                            <TableCell>{format(new Date(a.created_at), "dd.MM.yyyy")}</TableCell>
-                            <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground">
-                              {a.status === "waived" && a.waive_reason ? a.waive_reason : (a.note || a.description || "—")}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                  {arrearsLoading && (
+                    <p className="text-sm text-muted-foreground">Загрузка…</p>
+                  )}
+                  {arrearsError && (
+                    <ErrorState
+                      message="Не удалось загрузить задолженности (нужны роль admin или accountant и доступ к API)"
+                      onRetry={() => void refetchArrears()}
+                    />
+                  )}
+                  {!arrearsLoading && !arrearsError && (
+                    <>
+                      {(arrearsData?.data?.length ?? 0) === 0 ? (
+                        <p className="text-sm text-muted-foreground">Нет записей по долгам</p>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Год</TableHead>
+                                <TableHead>Сумма</TableHead>
+                                <TableHead>Описание</TableHead>
+                                <TableHead>Статус</TableHead>
+                                <TableHead>Источник</TableHead>
+                                <TableHead>Оплачено</TableHead>
+                                <TableHead>Создано</TableHead>
+                                <TableHead>Заметка</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {(arrearsData?.data ?? []).map((a) => (
+                                <TableRow key={a.id}>
+                                  <TableCell>{a.year ?? "—"}</TableCell>
+                                  <TableCell>{a.amount.toLocaleString("ru-RU")} ₽</TableCell>
+                                  <TableCell className="max-w-[140px] truncate text-sm" title={a.description ?? undefined}>
+                                    {a.description || "—"}
+                                  </TableCell>
+                                  <TableCell><StatusBadge status={a.status} /></TableCell>
+                                  <TableCell>
+                                    {a.source ? <StatusBadge status={a.source} /> : "—"}
+                                  </TableCell>
+                                  <TableCell className="text-sm whitespace-nowrap">
+                                    {a.paid_at ? format(new Date(a.paid_at), "dd.MM.yyyy HH:mm") : "—"}
+                                  </TableCell>
+                                  <TableCell className="text-sm whitespace-nowrap">
+                                    {format(new Date(a.created_at), "dd.MM.yyyy HH:mm")}
+                                  </TableCell>
+                                  <TableCell className="max-w-[180px] truncate text-xs text-muted-foreground" title={
+                                    a.status === "waived" && a.waive_reason
+                                      ? a.waive_reason
+                                      : (a.admin_note ?? a.note ?? "")
+                                  }>
+                                    {a.status === "waived" && a.waive_reason
+                                      ? a.waive_reason
+                                      : (a.admin_note ?? a.note ?? "—")}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                      {arrearsData != null && arrearsData.total > (arrearsData.data?.length ?? 0) && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Показано {arrearsData.data?.length ?? 0} из {arrearsData.total}. Полный список — в разделе «Все долги».
+                        </p>
+                      )}
+                    </>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
+            )}
 
             <TabsContent value="events">
               <Card>

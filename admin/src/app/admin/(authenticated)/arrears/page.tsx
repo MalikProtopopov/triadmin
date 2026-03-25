@@ -61,7 +61,12 @@ export default function ArrearsPage() {
     } else if (!includeAllStatuses) {
       p.set("include_inactive", "false");
     }
-    if (year.trim()) p.set("year", year.trim());
+    if (year.trim()) {
+      const y = parseInt(year.trim(), 10);
+      if (Number.isFinite(y) && y >= 2000 && y <= 2100) {
+        p.set("year", String(y));
+      }
+    }
     if (filterUserId) p.set("user_id", filterUserId);
     return p.toString();
   }, [page, perPage, statusFilter, includeAllStatuses, year, filterUserId]);
@@ -307,12 +312,15 @@ export default function ArrearsPage() {
           <Label>Год</Label>
           <Input
             className="w-24"
+            type="number"
+            min={2000}
+            max={2100}
             value={year}
             onChange={(e) => {
               setYear(e.target.value);
               setPage(1);
             }}
-            placeholder="Год"
+            placeholder="2000–2100"
           />
         </div>
         <div className="space-y-2 relative">
