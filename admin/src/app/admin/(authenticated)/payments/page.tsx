@@ -21,6 +21,8 @@ import { CancelPaymentModal } from "@/components/features/payments/CancelPayment
 import { ManualPaymentModal } from "@/components/features/payments/ManualPaymentModal";
 import { Input } from "@/components/ui/input";
 import { Receipt as ReceiptIcon, X, Plus, RotateCcw, ArrowUp, ArrowDown, Copy, XCircle, CheckCircle, CalendarDays } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { canManageFinance } from "@/lib/roles";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { totalPages } from "@/lib/pagination";
@@ -31,6 +33,8 @@ const showManualConfirm =
 
 function PaymentsContent() {
   const queryClient = useQueryClient();
+  const user = useAuth((s) => s.user);
+  const [manualOpen, setManualOpen] = useState(false);
   const [productType, setProductType] = useState("all");
   const [status, setStatus] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -45,7 +49,6 @@ function PaymentsContent() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelPayment, setCancelPayment] = useState<PaymentItem | null>(null);
   const [confirmLoading, setConfirmLoading] = useState<string | null>(null);
-  const [manualOpen, setManualOpen] = useState(false);
   const [filterUserId, setFilterUserId] = useState("");
   const [filterUserSearch, setFilterUserSearch] = useState("");
 
@@ -302,11 +305,14 @@ function PaymentsContent() {
   return (
     <div className="space-y-4">
       <Breadcrumbs items={[{ label: "Платежи" }]} />
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-2xl font-bold">Платежи</h1>
-        <Button onClick={() => setManualOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Добавить платёж
-        </Button>
+        {canManageFinance(user) && (
+          <Button type="button" onClick={() => setManualOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Ручной платёж
+          </Button>
+        )}
       </div>
 
       {data?.summary && (
@@ -340,6 +346,7 @@ function PaymentsContent() {
             <SelectItem value="entry_fee">Вступительный</SelectItem>
             <SelectItem value="subscription">Подписка</SelectItem>
             <SelectItem value="event">Мероприятие</SelectItem>
+            <SelectItem value="membership_arrears">Членские взносы (долг)</SelectItem>
           </SelectContent>
         </Select>
         <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>

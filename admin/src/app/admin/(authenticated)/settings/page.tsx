@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import api from "@/lib/api";
 import type { SiteSettings } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { ErrorState } from "@/components/shared/ErrorState";
@@ -26,7 +27,7 @@ export default function GeneralSettingsPage() {
     queryFn: () => api.get("/admin/settings").then((r) => r.data.data),
   });
 
-  const { register, handleSubmit, reset, formState: { isDirty } } = useForm<SiteSettings>();
+  const { register, handleSubmit, reset, control, formState: { isDirty } } = useForm<SiteSettings>();
 
   useEffect(() => {
     if (data) reset(data);
@@ -117,6 +118,48 @@ export default function GeneralSettingsPage() {
           <div className="space-y-2">
             <Label>Текст</Label>
             <Textarea {...register("home_mission.text")} rows={3} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Задолженности (членские взносы)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="arrears-block">Блокировать привилегии члена при открытых долгах</Label>
+              <p className="text-xs text-muted-foreground">Каталог и другие функции для должников</p>
+            </div>
+            <Controller
+              name="arrears_block_membership_features"
+              control={control}
+              render={({ field }) => (
+                <Switch
+                  id="arrears-block"
+                  checked={!!field.value}
+                  onCheckedChange={(c) => field.onChange(c)}
+                />
+              )}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <Label htmlFor="arrears-auto">Автоматическое начисление долгов</Label>
+              <p className="text-xs text-muted-foreground">Обработка на стороне сервера</p>
+            </div>
+            <Controller
+              name="arrears_auto_accrual_enabled"
+              control={control}
+              render={({ field }) => (
+                <Switch
+                  id="arrears-auto"
+                  checked={!!field.value}
+                  onCheckedChange={(c) => field.onChange(c)}
+                />
+              )}
+            />
           </div>
         </CardContent>
       </Card>

@@ -22,6 +22,20 @@ export function DashboardSkeleton() {
         ))}
       </div>
 
+      {/* Arrears metrics */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <Skeleton className="h-3 w-20" />
+            </CardHeader>
+            <CardContent className="pt-0">
+              <Skeleton className="h-7 w-16" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
       {/* Funnel cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (

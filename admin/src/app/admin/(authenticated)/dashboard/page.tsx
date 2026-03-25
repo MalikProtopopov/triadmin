@@ -56,6 +56,13 @@ export default function DashboardPage() {
 
   const upcomingEvents = eventsData?.data ?? [];
 
+  const arrearsOpenTotal = data.arrears_open_total ?? 0;
+  const arrearsOpenCount = data.arrears_open_count ?? 0;
+  const arrearsPaidTotal = data.arrears_paid_total ?? 0;
+  const arrearsPaidCount = data.arrears_paid_count ?? 0;
+  const arrearsWaivedTotal = data.arrears_waived_total ?? 0;
+  const arrearsWaivedCount = data.arrears_waived_count ?? 0;
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Дашборд</h1>
@@ -81,6 +88,71 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{data.payment_total_year.toLocaleString("ru-RU")} ₽</div>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      {/* Задолженности (членские взносы) — метрики из GET /admin/dashboard */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <Link href="/admin/arrears" className="min-w-0">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground leading-tight">Открытые долги, ₽</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-xl font-bold">{arrearsOpenTotal.toLocaleString("ru-RU")}</div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/arrears" className="min-w-0">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground leading-tight">Открытые, шт.</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-xl font-bold">{arrearsOpenCount}</div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/arrears" className="min-w-0">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground leading-tight">Погашено, ₽</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-xl font-bold">{arrearsPaidTotal.toLocaleString("ru-RU")}</div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/arrears" className="min-w-0">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground leading-tight">Погашено, шт.</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-xl font-bold">{arrearsPaidCount}</div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/arrears" className="min-w-0">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground leading-tight">Прощено, ₽</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-xl font-bold">{arrearsWaivedTotal.toLocaleString("ru-RU")}</div>
+              <p className="text-[10px] text-muted-foreground mt-1">отчётность</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/admin/arrears" className="min-w-0">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-medium text-muted-foreground leading-tight">Прощено, шт.</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-xl font-bold">{arrearsWaivedCount}</div>
             </CardContent>
           </Card>
         </Link>

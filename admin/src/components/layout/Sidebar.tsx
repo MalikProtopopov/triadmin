@@ -19,6 +19,7 @@ import {
   Vote,
   Bell,
   UserCog,
+  Wallet,
   LogOut,
   ChevronDown,
   ChevronRight,
@@ -50,6 +51,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Дашборд", href: "/admin/dashboard", icon: <LayoutDashboard className={iconCls} />, section: "dashboard" },
+  { label: "Задолженности", href: "/admin/arrears", icon: <Wallet className={iconCls} />, section: "arrears" },
   { label: "Врачи", href: "/admin/doctors", icon: <Users className={iconCls} />, section: "doctors" },
   { label: "Мероприятия", href: "/admin/events", icon: <CalendarDays className={iconCls} />, section: "events" },
   { label: "Платежи", href: "/admin/payments", icon: <CreditCard className={iconCls} />, section: "payments" },

@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import Link from "next/link";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
-import type { BoardRole, DoctorDetail } from "@/types";
+import type { ArrearItem, BoardRole, DoctorDetail, PaginatedResponse } from "@/types";
+import { useAuth } from "@/hooks/useAuth";
+import { canManageFinance } from "@/lib/roles";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Check, X, Power, PowerOff, Mail, Bell, FileWarning, ImageIcon, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { buildMediaUrl } from "@/lib/media";
@@ -58,6 +62,26 @@ const BOARD_ROLE_OPTIONS: { value: string; label: string }[] = [
 ];
 
 export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardProps) {
+  const user = useAuth((s) => s.user);
+  const finance = canManageFinance(user);
+
+  const { data: arrearsData } = useQuery<PaginatedResponse<ArrearItem>>({
+    queryKey: ["arrears", "doctor", doctor.user_id],
+    queryFn: () =>
+      api
+        .get(`/admin/arrears?user_id=${encodeURIComponent(doctor.user_id)}&limit=100`)
+        .then((r) => r.data),
+  });
+
+  const paymentOverrides = useMutation({
+    mutationFn: (entry_fee_exempt: boolean) =>
+      api.patch(`/admin/doctors/${doctor.id}/payment-overrides`, { entry_fee_exempt }),
+    onSuccess: () => {
+      onInvalidate();
+      toast.success("Настройки оплаты обновлены");
+    },
+  });
+
   const [approveOpen, setApproveOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [approveDraftOpen, setApproveDraftOpen] = useState(false);
@@ -101,7 +125,28 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
                   <StatusBadge status={doctor.moderation_status} />
                   {doctor.subscription?.status && <StatusBadge status={doctor.subscription.status} />}
                   {doctor.is_public !== undefined && <StatusBadge status={doctor.is_public ? "active" : "deactivated"} label={doctor.is_public ? "Публичный" : "Скрыт"} />}
+                  {doctor.entry_fee_exempt && (
+                    <StatusBadge status="approved" label="Вступительный не требуется" />
+                  )}
+                  {doctor.membership_excluded_at && (
+                    <span className="text-xs rounded-md border border-destructive/50 bg-destructive/10 px-2 py-0.5 text-destructive">
+                      Исключён из ассоциации {format(new Date(doctor.membership_excluded_at), "dd.MM.yyyy")}
+                    </span>
+                  )}
                 </div>
+                {finance && (
+                  <div className="flex items-center gap-2 mt-3">
+                    <Switch
+                      id="entry-fee-exempt"
+                      checked={!!doctor.entry_fee_exempt}
+                      disabled={paymentOverrides.isPending}
+                      onCheckedChange={(c) => paymentOverrides.mutate(c)}
+                    />
+                    <Label htmlFor="entry-fee-exempt" className="text-sm font-normal cursor-pointer">
+                      Не требовать вступительный взнос (entry_fee_exempt)
+                    </Label>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 mt-2">
                   <Label className="text-xs text-muted-foreground shrink-0">Роль в правлении</Label>
                   <Select
@@ -192,6 +237,7 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
               <TabsTrigger value="public">Публичный</TabsTrigger>
               <TabsTrigger value="content">Контентные блоки</TabsTrigger>
               <TabsTrigger value="payments">Платежи</TabsTrigger>
+              <TabsTrigger value="arrears">Задолженности</TabsTrigger>
               <TabsTrigger value="events">Мероприятия</TabsTrigger>
               <TabsTrigger value="certificates">Сертификаты</TabsTrigger>
               <TabsTrigger value="log">Лог</TabsTrigger>
@@ -369,6 +415,47 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
                             <TableCell>{p.amount.toLocaleString("ru-RU")} ₽</TableCell>
                             <TableCell><StatusBadge status={p.product_type} /></TableCell>
                             <TableCell><StatusBadge status={p.status} /></TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="arrears">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-base">Задолженности</CardTitle>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/admin/arrears`}>Все долги</Link>
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {(arrearsData?.data?.length ?? 0) === 0 ? (
+                    <p className="text-sm text-muted-foreground">Нет записей по долгам</p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Год</TableHead>
+                          <TableHead>Сумма</TableHead>
+                          <TableHead>Статус</TableHead>
+                          <TableHead>Создано</TableHead>
+                          <TableHead>Комментарий</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(arrearsData?.data ?? []).map((a) => (
+                          <TableRow key={a.id}>
+                            <TableCell>{a.year ?? "—"}</TableCell>
+                            <TableCell>{a.amount.toLocaleString("ru-RU")} ₽</TableCell>
+                            <TableCell><StatusBadge status={a.status} /></TableCell>
+                            <TableCell>{format(new Date(a.created_at), "dd.MM.yyyy")}</TableCell>
+                            <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground">
+                              {a.status === "waived" && a.waive_reason ? a.waive_reason : (a.note || a.description || "—")}
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

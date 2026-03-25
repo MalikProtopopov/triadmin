@@ -20,7 +20,9 @@ import { ru } from "date-fns/locale";
 const PRODUCT_TYPE_LABELS: Record<string, string> = {
   entry_fee: "Вступительный",
   annual_fee: "Ежегодный",
+  subscription: "Ежегодный",
   event: "Мероприятие",
+  membership_arrears: "Членские взносы (долг)",
 };
 
 const STATUS_LABELS: Record<string, string> = {

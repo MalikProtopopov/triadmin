@@ -28,6 +28,7 @@ const PRODUCT_TYPE_LABELS: Record<string, string> = {
   entry_fee: "Вступительный",
   subscription: "Ежегодный",
   event: "Мероприятие",
+  membership_arrears: "Членские взносы (долг)",
 };
 
 function getColumns(

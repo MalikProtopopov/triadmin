@@ -3,6 +3,7 @@
 export const ROLE_SIDEBAR_SECTIONS: Record<string, string[]> = {
   admin: [
     "dashboard",
+    "arrears",
     "doctors",
     "doctors_import",
     "events",
@@ -38,7 +39,7 @@ export const ROLE_SIDEBAR_SECTIONS: Record<string, string[]> = {
     "settings_certificates",
     "portal_users",
   ],
-  accountant: ["payments"],
+  accountant: ["arrears", "doctors", "payments"],
 };
 
 export function getSidebarSectionsForRole(role: string): string[] {
@@ -48,6 +49,7 @@ export function getSidebarSectionsForRole(role: string): string[] {
 /** Порядок секций для редиректа на первый доступный раздел */
 const DEFAULT_REDIRECT_ORDER: { section: string; href: string }[] = [
   { section: "dashboard", href: "/admin/dashboard" },
+  { section: "arrears", href: "/admin/arrears" },
   { section: "doctors", href: "/admin/doctors" },
   { section: "doctors_import", href: "/admin/portal-users/import" },
   { section: "events", href: "/admin/events" },

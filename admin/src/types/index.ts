@@ -4,7 +4,13 @@ export type ModerationStatus = "pending_review" | "approved" | "rejected";
 export type DoctorStatus = "pending_review" | "approved" | "rejected" | "active" | "deactivated";
 export type SubscriptionStatus = "active" | "expired" | "expiring_soon" | "never" | "pending_payment";
 export type PaymentStatus = "pending" | "succeeded" | "failed" | "expired" | "refunded" | "partially_refunded" | "canceled";
-export type ProductType = "entry_fee" | "subscription" | "event";
+export type ProductType = "entry_fee" | "subscription" | "event" | "membership_arrears";
+
+/** Статус строки задолженности (членские взносы) */
+export type ArrearStatus = "open" | "paid" | "cancelled" | "waived";
+
+/** Источник начисления долга — уточняется по OpenAPI */
+export type ArrearSource = string;
 export type EventStatus = "upcoming" | "ongoing" | "finished" | "cancelled";
 export type ArticleStatus = "draft" | "published" | "archived";
 export type VotingStatus = "draft" | "active" | "closed" | "cancelled";
@@ -83,6 +89,10 @@ export interface DoctorDocument {
 }
 
 export interface DoctorDetail extends Omit<DoctorListItem, "subscription"> {
+  /** Не требовать вступительный при оплате (миграция / бухгалтерия) */
+  entry_fee_exempt?: boolean;
+  /** Дата исключения из ассоциации */
+  membership_excluded_at?: string | null;
   passport_data: string | null;
   clinic_name: string | null;
   position: string | null;
@@ -325,6 +335,10 @@ export interface SiteSettings {
   contacts_for_visitors?: { email: string; phone: string; address?: string };
   home_hero?: { title: string; text: string; image_url: string | null };
   home_mission?: { text: string };
+  /** Блокировать привилегии члена при открытых долгах */
+  arrears_block_membership_features?: boolean;
+  /** Автоначисление долгов (бэкенд) */
+  arrears_auto_accrual_enabled?: boolean;
   [key: string]: unknown;
 }
 
@@ -479,6 +493,74 @@ export interface DashboardData {
   payment_total_year: number;
   upcoming_events: number;
   moderation_queue: number;
+  /** Сумма по открытым долгам (status=open) */
+  arrears_open_total?: number;
+  arrears_open_count?: number;
+  /** Сумма / кол-во оплаченных через учёт долгов */
+  arrears_paid_total?: number;
+  arrears_paid_count?: number;
+  /** Прощённые — отчётность, не выручка */
+  arrears_waived_total?: number;
+  arrears_waived_count?: number;
+}
+
+/** Строка задолженности (админ API) */
+export interface ArrearItem {
+  id: string;
+  user_id: string;
+  user?: { id: string; email: string; full_name: string } | null;
+  amount: number;
+  year?: number | null;
+  status: ArrearStatus;
+  source?: ArrearSource | null;
+  description?: string | null;
+  note?: string | null;
+  created_at: string;
+  updated_at?: string | null;
+  waived_at?: string | null;
+  waived_by?: string | null;
+  waive_reason?: string | null;
+}
+
+/** Сводка GET /admin/arrears/summary */
+export interface ArrearsSummary {
+  open_total: number;
+  open_count: number;
+  paid_total: number;
+  paid_count: number;
+  waived_total: number;
+  waived_count: number;
+  cancelled_total?: number;
+  cancelled_count?: number;
+}
+
+/** Создание долга вручную POST /admin/arrears */
+export interface CreateArrearRequest {
+  user_id: string;
+  amount: number;
+  year?: number;
+  description?: string;
+  note?: string;
+  source?: string;
+}
+
+/** PATCH /admin/arrears/{id} (только open) */
+export interface PatchArrearRequest {
+  amount?: number;
+  description?: string | null;
+  note?: string | null;
+}
+
+/** POST /admin/payments/manual */
+export interface ManualPaymentRequest {
+  user_id: string;
+  amount: number;
+  product_type: ProductType;
+  description: string;
+  subscription_id?: string | null;
+  event_registration_id?: string | null;
+  /** Для product_type=membership_arrears */
+  arrear_id?: string | null;
 }
 
 export interface ArticleTheme {
