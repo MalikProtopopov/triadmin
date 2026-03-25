@@ -536,7 +536,20 @@ export interface ArrearItem {
   waive_reason?: string | null;
 }
 
-/** Сводка GET /admin/arrears/summary */
+/** Тело ответа GET /admin/arrears/summary (как в OpenAPI / бэкенде) */
+export interface ArrearSummaryResponse {
+  total_open_amount: number;
+  count_open: number;
+  total_paid_amount: number;
+  count_paid: number;
+  total_waived_amount: number;
+  count_waived: number;
+}
+
+/**
+ * Сводка для UI после `normalizeArrearsSummary` (единые имена полей).
+ * Исходный JSON см. {@link ArrearSummaryResponse}.
+ */
 export interface ArrearsSummary {
   open_total: number;
   open_count: number;
@@ -544,6 +557,7 @@ export interface ArrearsSummary {
   paid_count: number;
   waived_total: number;
   waived_count: number;
+  /** В текущем API сводки может не быть — только для легаси/расширений */
   cancelled_total?: number;
   cancelled_count?: number;
 }
