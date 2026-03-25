@@ -508,7 +508,14 @@ export interface DashboardData {
 export interface ArrearItem {
   id: string;
   user_id: string;
-  user?: { id: string; email: string; full_name: string } | null;
+  /** В списке заполняется (ArrearUserNested) */
+  user?: {
+    id: string;
+    email: string;
+    full_name: string | null;
+    phone?: string | null;
+    telegram_username?: string | null;
+  } | null;
   amount: number;
   year?: number | null;
   status: ArrearStatus;

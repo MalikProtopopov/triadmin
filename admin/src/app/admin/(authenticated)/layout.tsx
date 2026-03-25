@@ -18,7 +18,14 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       router.replace("/admin/login");
       return;
     }
-    if (!isLoading && user && hasRole(user, "accountant") && !pathname.startsWith("/admin/payments")) {
+    if (
+      !isLoading &&
+      user &&
+      hasRole(user, "accountant") &&
+      !pathname.startsWith("/admin/payments") &&
+      !pathname.startsWith("/admin/arrears") &&
+      !pathname.startsWith("/admin/doctors")
+    ) {
       router.replace("/admin/payments");
     }
   }, [user, isLoading, router, pathname]);

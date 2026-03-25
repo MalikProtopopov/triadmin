@@ -51,10 +51,18 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Дашборд", href: "/admin/dashboard", icon: <LayoutDashboard className={iconCls} />, section: "dashboard" },
-  { label: "Задолженности", href: "/admin/arrears", icon: <Wallet className={iconCls} />, section: "arrears" },
   { label: "Врачи", href: "/admin/doctors", icon: <Users className={iconCls} />, section: "doctors" },
   { label: "Мероприятия", href: "/admin/events", icon: <CalendarDays className={iconCls} />, section: "events" },
-  { label: "Платежи", href: "/admin/payments", icon: <CreditCard className={iconCls} />, section: "payments" },
+  {
+    label: "Платежи",
+    href: "/admin/payments",
+    icon: <CreditCard className={iconCls} />,
+    section: "payments",
+    children: [
+      { label: "Платежи", href: "/admin/payments", section: "payments", icon: <CreditCard className={iconCls} /> },
+      { label: "Задолженности", href: "/admin/arrears", section: "arrears", icon: <Wallet className={iconCls} /> },
+    ],
+  },
   {
     label: "Контент",
     href: "/admin/content",
@@ -112,6 +120,13 @@ function getActiveSection(pathname: string): string | null {
     if (pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href + "/"))) {
       return item.section;
     }
+    if (item.children) {
+      for (const child of item.children) {
+        if (pathname === child.href || (child.href !== "/admin" && pathname.startsWith(child.href + "/"))) {
+          return item.section;
+        }
+      }
+    }
   }
   return null;
 }
@@ -157,9 +172,17 @@ export function Sidebar({ mobile }: { mobile?: boolean } = {}) {
       <ScrollArea className="flex-1 min-h-0 overflow-auto">
         <nav className="space-y-0.5 px-2 py-2 pb-4">
           {visibleItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
             const visibleChildren = item.children?.filter((c) => isSectionVisible(sections, c.section));
             const hasChildren = visibleChildren && visibleChildren.length > 0;
+            const childPathActive =
+              hasChildren &&
+              visibleChildren!.some(
+                (c) => pathname === c.href || (c.href !== "/admin" && pathname.startsWith(c.href + "/"))
+              );
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/admin" && pathname.startsWith(item.href + "/")) ||
+              !!childPathActive;
             const isExpanded = hasChildren && expanded.has(item.section);
 
             return (

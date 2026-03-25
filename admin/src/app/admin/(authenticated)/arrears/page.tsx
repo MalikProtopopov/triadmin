@@ -4,7 +4,7 @@ import { useMemo, useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import api from "@/lib/api";
-import type { ArrearItem, ArrearsSummary, PaginatedResponse } from "@/types";
+import type { ArrearItem, PaginatedResponse } from "@/types";
 import { DataTable } from "@/components/shared/DataTable";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -25,13 +25,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { totalPages } from "@/lib/pagination";
 import { Plus, X } from "lucide-react";
-
-function parseSummary(raw: unknown): ArrearsSummary | null {
-  if (raw == null || typeof raw !== "object") return null;
-  const o = raw as Record<string, unknown>;
-  const inner = o.data;
-  return (inner != null && typeof inner === "object" ? inner : o) as ArrearsSummary;
-}
+import { normalizeArrearsSummary } from "@/lib/arrearsSummary";
 
 export default function ArrearsPage() {
   const queryClient = useQueryClient();
@@ -87,10 +81,13 @@ export default function ArrearsPage() {
 
   const { data: summaryRaw } = useQuery({
     queryKey: ["arrears-summary"],
-    queryFn: () => api.get("/admin/arrears/summary").then((r) => r.data),
+    queryFn: async () => {
+      const { data } = await api.get<unknown>("/admin/arrears/summary");
+      return data;
+    },
   });
 
-  const summary = parseSummary(summaryRaw);
+  const summary = normalizeArrearsSummary(summaryRaw);
 
   const cancelMut = useMutation({
     mutationFn: (id: string) => api.post(`/admin/arrears/${id}/cancel`),
@@ -117,23 +114,24 @@ export default function ArrearsPage() {
   const columns = useMemo<ColumnDef<ArrearItem>[]>(
     () => [
       {
-        accessorKey: "created_at",
-        header: "Создано",
-        cell: ({ row }) => format(new Date(row.original.created_at), "dd.MM.yyyy HH:mm"),
-      },
-      {
         id: "user",
-        header: "Пользователь",
+        header: "ФИО",
         cell: ({ row }) => {
           const u = row.original.user;
           if (!u) return <span className="text-muted-foreground">—</span>;
+          const name = u.full_name?.trim();
           return (
             <div>
-              <p className="font-medium text-sm">{u.full_name}</p>
+              <p className="font-medium text-sm">{name || "—"}</p>
               <p className="text-xs text-muted-foreground">{u.email}</p>
             </div>
           );
         },
+      },
+      {
+        accessorKey: "created_at",
+        header: "Создано",
+        cell: ({ row }) => format(new Date(row.original.created_at), "dd.MM.yyyy HH:mm"),
       },
       {
         accessorKey: "year",
@@ -153,7 +151,10 @@ export default function ArrearsPage() {
       {
         accessorKey: "source",
         header: "Источник",
-        cell: ({ row }) => row.original.source || "—",
+        cell: ({ row }) => {
+          const s = row.original.source;
+          return s ? <StatusBadge status={s} /> : "—";
+        },
       },
       {
         id: "audit",
