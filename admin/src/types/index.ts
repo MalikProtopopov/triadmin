@@ -307,6 +307,25 @@ export interface OrgDocument {
   content_blocks?: ContentBlock[];
 }
 
+/** Элемент галереи в block_metadata (url = s3_key или полный URL для legacy) */
+export interface GalleryImageItem {
+  url: string;
+  alt: string;
+}
+
+/** Админская медиатека GET/POST /admin/media */
+export interface MediaAsset {
+  id: string;
+  s3_key: string;
+  public_url: string;
+  original_filename: string;
+  mime_type: string;
+  size_bytes: number;
+  width: number | null;
+  height: number | null;
+  created_at: string;
+}
+
 export interface ContentBlock {
   id: string;
   entity_type: string;

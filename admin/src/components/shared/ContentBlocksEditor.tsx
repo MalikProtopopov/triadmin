@@ -20,7 +20,9 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import api from "@/lib/api";
-import type { ContentBlock, ContentBlockType, DeviceType } from "@/types";
+import type { ContentBlock, ContentBlockType, DeviceType, GalleryImageItem } from "@/types";
+import { buildMediaUrl } from "@/lib/media";
+import { MediaLibraryModal } from "@/components/shared/MediaLibraryModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +67,7 @@ interface BlockFormData {
   link_url: string;
   link_label: string;
   device_type: DeviceType;
+  galleryImages: GalleryImageItem[];
 }
 
 const EMPTY_FORM: BlockFormData = {
@@ -76,18 +79,45 @@ const EMPTY_FORM: BlockFormData = {
   link_url: "",
   link_label: "",
   device_type: "both",
+  galleryImages: [],
 };
+
+function parseGalleryMetadata(meta: Record<string, unknown> | null | undefined): GalleryImageItem[] {
+  if (!meta || typeof meta !== "object") return [];
+  const images = meta.images;
+  if (!Array.isArray(images)) return [];
+  const out: GalleryImageItem[] = [];
+  for (const raw of images) {
+    if (!raw || typeof raw !== "object") continue;
+    const o = raw as Record<string, unknown>;
+    const url = typeof o.url === "string" ? o.url.trim() : "";
+    if (!url) continue;
+    const alt = typeof o.alt === "string" ? o.alt : "";
+    out.push({ url, alt });
+  }
+  return out;
+}
+
+function imageBlockPreviewSrc(mediaUrl: string): string | null {
+  const u = mediaUrl.trim();
+  if (!u) return null;
+  if (/^https?:\/\//i.test(u)) return u;
+  return buildMediaUrl(u);
+}
 
 function blockPreview(block: ContentBlock): string {
   switch (block.block_type) {
     case "text":
       return block.content ? block.content.replace(/<[^>]+>/g, "").slice(0, 80) : "Пустой текст";
     case "image":
-      return block.media_url || "Нет изображения";
+      return block.media_url ? "Изображение" : "Нет изображения";
     case "video":
       return block.media_url || "Нет видео";
-    case "gallery":
-      return block.media_url || "Нет медиа";
+    case "gallery": {
+      const meta = block.block_metadata;
+      const n = parseGalleryMetadata(meta).length;
+      return n > 0 ? `${n} фото` : "Нет изображений";
+    }
     case "link":
       return block.link_url || "Нет ссылки";
     default:
@@ -150,6 +180,8 @@ export function ContentBlocksEditor({ entityType, entityId, initialBlocks }: Con
   const [editingBlock, setEditingBlock] = useState<ContentBlock | null>(null);
   const [form, setForm] = useState<BlockFormData>(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState<ContentBlock | null>(null);
+  const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
+  const [mediaLibraryForGallery, setMediaLibraryForGallery] = useState(false);
 
   const { data: blocks = [] } = useQuery<ContentBlock[]>({
     queryKey,
@@ -235,11 +267,19 @@ export function ContentBlocksEditor({ entityType, entityId, initialBlocks }: Con
       link_url: block.link_url || "",
       link_label: block.link_label || "",
       device_type: block.device_type,
+      galleryImages: parseGalleryMetadata(block.block_metadata),
     });
     setModalOpen(true);
   }
 
   function handleSave() {
+    if (form.block_type === "gallery") {
+      if (!form.galleryImages.length || form.galleryImages.some((i) => !i.url.trim())) {
+        toast.error("Добавьте хотя бы одно изображение (из медиатеки или URL).");
+        return;
+      }
+    }
+
     const payload: Partial<ContentBlock> = {
       block_type: form.block_type,
       title: form.title || null,
@@ -251,10 +291,36 @@ export function ContentBlocksEditor({ entityType, entityId, initialBlocks }: Con
       device_type: form.device_type,
     };
 
+    if (form.block_type === "gallery") {
+      payload.media_url = null;
+      payload.block_metadata = {
+        images: form.galleryImages.map(({ url, alt }) => ({
+          url: url.trim(),
+          alt: alt.trim(),
+        })),
+      };
+    }
+
     if (editingBlock) {
       updateBlock.mutate({ id: editingBlock.id, ...payload });
     } else {
-      createBlock.mutate({ ...payload, sort_order: blocks.length });
+      createBlock.mutate({ ...payload, sort_order: blocks.length, locale: "ru" });
+    }
+  }
+
+  function openMediaPicker(forGallery: boolean) {
+    setMediaLibraryForGallery(forGallery);
+    setMediaLibraryOpen(true);
+  }
+
+  function onMediaLibrarySelect(item: { s3_key: string; public_url: string }) {
+    if (mediaLibraryForGallery) {
+      setForm((p) => ({
+        ...p,
+        galleryImages: [...p.galleryImages, { url: item.s3_key, alt: "" }],
+      }));
+    } else {
+      setForm((p) => ({ ...p, media_url: item.s3_key }));
     }
   }
 
@@ -323,8 +389,29 @@ export function ContentBlocksEditor({ entityType, entityId, initialBlocks }: Con
             {form.block_type === "image" && (
               <>
                 <div className="space-y-2">
-                  <Label>URL изображения</Label>
-                  <Input value={form.media_url} onChange={(e) => setForm((p) => ({ ...p, media_url: e.target.value }))} placeholder="https://..." />
+                  <Label>Файл</Label>
+                  <Button type="button" variant="secondary" onClick={() => openMediaPicker(false)}>
+                    Выбрать из медиатеки
+                  </Button>
+                  {imageBlockPreviewSrc(form.media_url) && (
+                    <div className="relative w-full max-w-md max-h-56 rounded-md border overflow-hidden bg-muted flex items-center justify-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imageBlockPreviewSrc(form.media_url)!}
+                        alt=""
+                        className="max-w-full max-h-56 object-contain"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label>Или укажите URL вручную</Label>
+                  <Input
+                    value={form.media_url}
+                    onChange={(e) => setForm((p) => ({ ...p, media_url: e.target.value }))}
+                    placeholder="Ключ S3 (media-library/…) или полный https://…"
+                  />
+                  <p className="text-xs text-muted-foreground">Из медиатеки сохраняется ключ объекта в S3.</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Alt-текст</Label>
@@ -347,10 +434,88 @@ export function ContentBlocksEditor({ entityType, entityId, initialBlocks }: Con
             )}
 
             {form.block_type === "gallery" && (
-              <div className="space-y-2">
-                <Label>URL медиа</Label>
-                <Input value={form.media_url} onChange={(e) => setForm((p) => ({ ...p, media_url: e.target.value }))} placeholder="https://..." />
-                <p className="text-xs text-muted-foreground">Множественная загрузка будет доступна после реализации API</p>
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="secondary" onClick={() => openMediaPicker(true)}>
+                    Добавить из медиатеки
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      setForm((p) => ({
+                        ...p,
+                        galleryImages: [...p.galleryImages, { url: "", alt: "" }],
+                      }))
+                    }
+                  >
+                    Добавить строку вручную
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  В каждой строке — ключ из медиатеки или полный URL; подпись (alt) для доступности.
+                </p>
+                {form.galleryImages.length === 0 && (
+                  <p className="text-sm text-amber-800 dark:text-amber-200">Добавьте хотя бы одно изображение.</p>
+                )}
+                <div className="space-y-3">
+                  {form.galleryImages.map((row, idx) => (
+                    <div key={idx} className="flex gap-2 items-start border rounded-lg p-2">
+                      <div className="w-20 h-20 shrink-0 rounded bg-muted overflow-hidden flex items-center justify-center">
+                        {imageBlockPreviewSrc(row.url) ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={imageBlockPreviewSrc(row.url)!}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <Input
+                          placeholder="Адрес: ключ S3 или https://…"
+                          value={row.url}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setForm((p) => {
+                              const next = [...p.galleryImages];
+                              next[idx] = { ...next[idx], url: v };
+                              return { ...p, galleryImages: next };
+                            });
+                          }}
+                        />
+                        <Input
+                          placeholder="Подпись (alt)"
+                          value={row.alt}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setForm((p) => {
+                              const next = [...p.galleryImages];
+                              next[idx] = { ...next[idx], alt: v };
+                              return { ...p, galleryImages: next };
+                            });
+                          }}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 text-destructive"
+                        onClick={() =>
+                          setForm((p) => ({
+                            ...p,
+                            galleryImages: p.galleryImages.filter((_, i) => i !== idx),
+                          }))
+                        }
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -380,6 +545,13 @@ export function ContentBlocksEditor({ entityType, entityId, initialBlocks }: Con
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <MediaLibraryModal
+        open={mediaLibraryOpen}
+        onOpenChange={setMediaLibraryOpen}
+        onSelect={onMediaLibrarySelect}
+        title={mediaLibraryForGallery ? "Изображение для галереи" : "Изображение для блока"}
+      />
 
       <ConfirmDialog
         open={!!deleteTarget}
