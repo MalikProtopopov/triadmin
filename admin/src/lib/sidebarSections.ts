@@ -5,6 +5,7 @@ export const ROLE_SIDEBAR_SECTIONS: Record<string, string[]> = {
     "dashboard",
     "arrears",
     "doctors",
+    "protocol_history",
     "doctors_import",
     "events",
     "payments",
@@ -27,6 +28,7 @@ export const ROLE_SIDEBAR_SECTIONS: Record<string, string[]> = {
   manager: [
     "dashboard",
     "doctors",
+    "protocol_history",
     "events",
     "payments",
     "content",
@@ -51,6 +53,7 @@ const DEFAULT_REDIRECT_ORDER: { section: string; href: string }[] = [
   { section: "dashboard", href: "/admin/dashboard" },
   { section: "arrears", href: "/admin/arrears" },
   { section: "doctors", href: "/admin/doctors" },
+  { section: "protocol_history", href: "/admin/protocol-history" },
   { section: "doctors_import", href: "/admin/portal-users/import" },
   { section: "events", href: "/admin/events" },
   { section: "payments", href: "/admin/payments" },

@@ -594,6 +594,55 @@ export interface ManualPaymentRequest {
   arrear_id?: string | null;
 }
 
+/** История протокола (приём / исключение) — GET/POST/PATCH /admin/protocol-history */
+export type ProtocolActionType = "admission" | "exclusion";
+
+export interface ProtocolHistoryDoctorNested {
+  id: string;
+  email: string;
+  full_name: string | null;
+  phone?: string | null;
+  telegram_username?: string | null;
+}
+
+export interface ProtocolHistoryStaffUserNested {
+  id: string;
+  email: string;
+  full_name: string | null;
+}
+
+export interface ProtocolHistoryResponse {
+  id: string;
+  year: number;
+  protocol_title: string;
+  notes: string | null;
+  doctor_user_id: string;
+  action_type: ProtocolActionType;
+  created_by_user_id: string;
+  last_edited_by_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+  doctor: ProtocolHistoryDoctorNested;
+  created_by_user: ProtocolHistoryStaffUserNested;
+  last_edited_by_user: ProtocolHistoryStaffUserNested | null;
+}
+
+export interface CreateProtocolHistoryRequest {
+  year: number;
+  protocol_title: string;
+  notes?: string | null;
+  doctor_user_id: string;
+  action_type: ProtocolActionType;
+}
+
+export interface PatchProtocolHistoryRequest {
+  year?: number;
+  protocol_title?: string;
+  notes?: string | null;
+  doctor_user_id?: string;
+  action_type?: ProtocolActionType;
+}
+
 export interface ArticleTheme {
   id: string;
   slug: string;

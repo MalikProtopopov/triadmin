@@ -49,6 +49,9 @@ const STATUS_CONFIG: Record<string, { label: string; variant: Variant; className
   participants_only: { label: "Для участников", variant: "outline", className: "border-purple-500 text-purple-700 bg-purple-50" },
   approve: { label: "Одобрено", variant: "outline", className: "border-green-500 text-green-700 bg-green-50" },
   reject: { label: "Отклонено", variant: "destructive" },
+  /** История протокола */
+  admission: { label: "Приём", variant: "outline", className: "border-green-500 text-green-800" },
+  exclusion: { label: "Исключение", variant: "outline", className: "border-orange-500 text-orange-800" },
 };
 
 interface StatusBadgeProps {

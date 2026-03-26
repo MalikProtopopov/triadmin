@@ -24,6 +24,7 @@ import {
   ChevronDown,
   ChevronRight,
   Upload,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,6 +53,12 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: "Дашборд", href: "/admin/dashboard", icon: <LayoutDashboard className={iconCls} />, section: "dashboard" },
   { label: "Врачи", href: "/admin/doctors", icon: <Users className={iconCls} />, section: "doctors" },
+  {
+    label: "История протокола",
+    href: "/admin/protocol-history",
+    icon: <ClipboardList className={iconCls} />,
+    section: "protocol_history",
+  },
   { label: "Мероприятия", href: "/admin/events", icon: <CalendarDays className={iconCls} />, section: "events" },
   {
     label: "Платежи",
