@@ -4,7 +4,9 @@ import { useMemo, useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import api from "@/lib/api";
-import type { PaginatedResponse, ProtocolHistoryResponse } from "@/types";
+import type { DoctorListItem, PaginatedResponse, ProtocolHistoryResponse } from "@/types";
+import { doctorListItemLabel } from "@/lib/doctorList";
+import { useDebounce } from "@/hooks/useDebounce";
 import { DataTable } from "@/components/shared/DataTable";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -34,8 +36,9 @@ export default function ProtocolHistoryPage() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [actionTypeFilter, setActionTypeFilter] = useState<string>("all");
-  const [filterUserId, setFilterUserId] = useState("");
-  const [filterUserSearch, setFilterUserSearch] = useState("");
+  const [filterDoctorUserId, setFilterDoctorUserId] = useState("");
+  const [filterDoctorSearch, setFilterDoctorSearch] = useState("");
+  const debouncedDoctorSearch = useDebounce(filterDoctorSearch, 300);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editEntry, setEditEntry] = useState<ProtocolHistoryResponse | null>(null);
@@ -48,16 +51,35 @@ export default function ProtocolHistoryPage() {
     if (actionTypeFilter !== "all") {
       p.set("action_type", actionTypeFilter);
     }
-    if (filterUserId) p.set("doctor_user_id", filterUserId);
+    if (filterDoctorUserId) p.set("doctor_user_id", filterDoctorUserId);
     return p.toString();
-  }, [page, perPage, actionTypeFilter, filterUserId]);
+  }, [page, perPage, actionTypeFilter, filterDoctorUserId]);
 
-  const { data: userHints } = useQuery<{ data: { id: string; email: string; full_name: string }[] }>({
-    queryKey: ["portal-users-protocol-history-filter", filterUserSearch],
-    queryFn: () =>
-      api.get(`/admin/portal-users?search=${encodeURIComponent(filterUserSearch)}&limit=10`).then((r) => r.data),
-    enabled: filterUserSearch.length >= 2 && !filterUserId,
+  const {
+    data: doctorsPage,
+    isFetching: doctorsSearchLoading,
+    isFetched: doctorsSearchFetched,
+  } = useQuery<PaginatedResponse<DoctorListItem>>({
+    queryKey: ["admin-doctors-protocol-history-filter", debouncedDoctorSearch],
+    queryFn: () => {
+      const sp = new URLSearchParams();
+      sp.set("limit", "30");
+      sp.set("offset", "0");
+      sp.set("search", debouncedDoctorSearch);
+      sp.set("sort_by", "created_at");
+      sp.set("sort_order", "desc");
+      return api.get(`/admin/doctors?${sp}`).then((r) => r.data);
+    },
+    enabled: debouncedDoctorSearch.length >= 2 && !filterDoctorUserId,
   });
+
+  const doctorOptions = doctorsPage?.data ?? [];
+  const showDoctorEmpty =
+    !filterDoctorUserId &&
+    debouncedDoctorSearch.length >= 2 &&
+    doctorsSearchFetched &&
+    !doctorsSearchLoading &&
+    doctorOptions.length === 0;
 
   const { data: listRaw, isLoading, error, refetch } = useQuery({
     queryKey: ["protocol-history", params],
@@ -158,12 +180,12 @@ export default function ProtocolHistoryPage() {
     []
   );
 
-  const hasFilters = actionTypeFilter !== "all" || !!filterUserId;
+  const hasFilters = actionTypeFilter !== "all" || !!filterDoctorUserId;
 
   const resetFilters = useCallback(() => {
     setActionTypeFilter("all");
-    setFilterUserId("");
-    setFilterUserSearch("");
+    setFilterDoctorUserId("");
+    setFilterDoctorSearch("");
     setPage(1);
   }, []);
 
@@ -200,37 +222,73 @@ export default function ProtocolHistoryPage() {
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-2 relative">
-          <Label>Врач</Label>
-          <Input
-            className="w-56"
-            placeholder="Поиск…"
-            value={filterUserSearch}
-            onChange={(e) => {
-              setFilterUserSearch(e.target.value);
-              if (filterUserId) {
-                setFilterUserId("");
-                setPage(1);
-              }
-            }}
-          />
-          {(userHints?.data?.length ?? 0) > 0 && !filterUserId && (
-            <div className="absolute z-10 mt-1 w-full border rounded-md bg-background shadow-md max-h-40 overflow-auto">
-              {userHints!.data.map((u) => (
-                <button
-                  key={u.id}
+        <div className="space-y-2 w-full max-w-md">
+          <Label htmlFor="protocol-history-doctor-filter">Врач</Label>
+          <p className="text-xs text-muted-foreground">
+            Поиск по каталогу врачей: введите фамилию или email (от 2 символов), выберите строку из списка — фильтр
+            применится сразу.
+          </p>
+          <div className="relative">
+            <div className="flex gap-2 items-center">
+              <Input
+                id="protocol-history-doctor-filter"
+                className="min-w-0 flex-1 sm:max-w-sm"
+                placeholder="Например: Иванов или doc@"
+                autoComplete="off"
+                value={filterDoctorSearch}
+                onChange={(e) => {
+                  setFilterDoctorSearch(e.target.value);
+                  if (filterDoctorUserId) {
+                    setFilterDoctorUserId("");
+                    setPage(1);
+                  }
+                }}
+              />
+              {filterDoctorUserId && (
+                <Button
                   type="button"
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
                   onClick={() => {
-                    setFilterUserId(u.id);
-                    setFilterUserSearch(`${u.full_name} (${u.email})`);
+                    setFilterDoctorUserId("");
+                    setFilterDoctorSearch("");
                     setPage(1);
                   }}
                 >
-                  {u.full_name} — {u.email}
-                </button>
-              ))}
+                  Сбросить врача
+                </Button>
+              )}
             </div>
+            {!filterDoctorUserId && doctorOptions.length > 0 && debouncedDoctorSearch.length >= 2 && (
+              <div className="absolute left-0 right-0 top-full z-50 mt-1 border rounded-md bg-popover text-popover-foreground shadow-md max-h-56 overflow-auto">
+                {doctorOptions.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
+                    onClick={() => {
+                      setFilterDoctorUserId(d.user_id);
+                      setFilterDoctorSearch(doctorListItemLabel(d));
+                      setPage(1);
+                    }}
+                  >
+                    {doctorListItemLabel(d)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {!filterDoctorUserId && filterDoctorSearch.length > 0 && filterDoctorSearch.length < 2 && (
+            <p className="text-xs text-muted-foreground">Введите ещё символы для поиска.</p>
+          )}
+          {!filterDoctorUserId && debouncedDoctorSearch.length >= 2 && doctorsSearchLoading && (
+            <p className="text-xs text-muted-foreground">Ищем врачей…</p>
+          )}
+          {showDoctorEmpty && (
+            <p className="text-xs text-amber-800 dark:text-amber-200">
+              Ничего не найдено. Попробуйте другую фамилию или email.
+            </p>
           )}
         </div>
         {hasFilters && (

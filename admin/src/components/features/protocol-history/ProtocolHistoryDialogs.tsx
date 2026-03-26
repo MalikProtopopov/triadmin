@@ -5,10 +5,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import type {
   CreateProtocolHistoryRequest,
+  DoctorListItem,
   PatchProtocolHistoryRequest,
   ProtocolActionType,
   ProtocolHistoryResponse,
+  PaginatedResponse,
 } from "@/types";
+import { doctorListItemLabel } from "@/lib/doctorList";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +36,97 @@ function validateYear(y: number): boolean {
   return Number.isFinite(y) && y >= 2000 && y <= 2100;
 }
 
+function DoctorPickerField({
+  id,
+  search,
+  onSearchChange,
+  doctorUserId,
+  onClearDoctor,
+  onSelectDoctor,
+  queryKeySuffix,
+  enabled,
+}: {
+  id?: string;
+  search: string;
+  onSearchChange: (v: string) => void;
+  doctorUserId: string;
+  onClearDoctor: () => void;
+  onSelectDoctor: (userId: string, label: string) => void;
+  queryKeySuffix: string;
+  enabled: boolean;
+}) {
+  const debounced = useDebounce(search, 300);
+  const {
+    data: doctorsPage,
+    isFetching,
+    isFetched,
+  } = useQuery<PaginatedResponse<DoctorListItem>>({
+    queryKey: ["admin-doctors-protocol-dialog", queryKeySuffix, debounced],
+    queryFn: () => {
+      const sp = new URLSearchParams();
+      sp.set("limit", "30");
+      sp.set("offset", "0");
+      sp.set("search", debounced);
+      sp.set("sort_by", "created_at");
+      sp.set("sort_order", "desc");
+      return api.get(`/admin/doctors?${sp}`).then((r) => r.data);
+    },
+    enabled: enabled && debounced.length >= 2 && !doctorUserId,
+  });
+  const options = doctorsPage?.data ?? [];
+  const showEmpty =
+    enabled && debounced.length >= 2 && !doctorUserId && isFetched && !isFetching && options.length === 0;
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>Врач</Label>
+      <p className="text-xs text-muted-foreground">
+        Каталог врачей: от 2 символов фамилии или email, затем выбор из списка.
+      </p>
+      <div className="relative">
+        <div className="flex gap-2 items-center">
+          <Input
+            id={id}
+            className="min-w-0 flex-1"
+            placeholder="Фамилия или email…"
+            autoComplete="off"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+          {doctorUserId && (
+            <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={onClearDoctor}>
+              Сбросить
+            </Button>
+          )}
+        </div>
+        {!doctorUserId && options.length > 0 && debounced.length >= 2 && (
+          <div className="absolute left-0 right-0 top-full z-50 mt-1 border rounded-md bg-popover shadow-md max-h-40 overflow-auto">
+            {options.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
+                onClick={() => onSelectDoctor(d.user_id, doctorListItemLabel(d))}
+              >
+                {doctorListItemLabel(d)}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {enabled && !doctorUserId && search.length > 0 && search.length < 2 && (
+        <p className="text-xs text-muted-foreground">Введите ещё символы.</p>
+      )}
+      {enabled && debounced.length >= 2 && !doctorUserId && isFetching && (
+        <p className="text-xs text-muted-foreground">Ищем врачей…</p>
+      )}
+      {showEmpty && (
+        <p className="text-xs text-amber-800 dark:text-amber-200">Ничего не найдено. Попробуйте другой запрос.</p>
+      )}
+    </div>
+  );
+}
+
 export function CreateProtocolHistoryDialog({
   open,
   onOpenChange,
@@ -46,13 +141,6 @@ export function CreateProtocolHistoryDialog({
   const [protocolTitle, setProtocolTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [actionType, setActionType] = useState<ProtocolActionType>("admission");
-
-  const { data: userHints } = useQuery<{ data: { id: string; email: string; full_name: string }[] }>({
-    queryKey: ["portal-users-protocol-history", userSearch],
-    queryFn: () =>
-      api.get(`/admin/portal-users?search=${encodeURIComponent(userSearch)}&limit=10`).then((r) => r.data),
-    enabled: open && userSearch.length >= 2 && !doctorUserId,
-  });
 
   const mutation = useMutation({
     mutationFn: (body: CreateProtocolHistoryRequest) => api.post("/admin/protocol-history", body),
@@ -101,35 +189,25 @@ export function CreateProtocolHistoryDialog({
           <DialogTitle>Добавить запись</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <div className="space-y-2">
-            <Label>Врач (email / ФИО)</Label>
-            <Input
-              value={userSearch}
-              onChange={(e) => {
-                setUserSearch(e.target.value);
-                if (doctorUserId) setDoctorUserId("");
-              }}
-              placeholder="Начните вводить..."
-            />
-            {(userHints?.data?.length ?? 0) > 0 && !doctorUserId && (
-              <div className="border rounded-md max-h-32 overflow-auto">
-                {userHints!.data.map((u) => (
-                  <button
-                    key={u.id}
-                    type="button"
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
-                    onClick={() => {
-                      setDoctorUserId(u.id);
-                      setUserSearch(`${u.full_name} (${u.email})`);
-                    }}
-                  >
-                    {u.full_name} — {u.email}
-                  </button>
-                ))}
-              </div>
-            )}
-            {doctorUserId && <p className="text-xs text-muted-foreground">ID: {doctorUserId}</p>}
-          </div>
+          <DoctorPickerField
+            id="protocol-create-doctor"
+            search={userSearch}
+            onSearchChange={(v) => {
+              setUserSearch(v);
+              if (doctorUserId) setDoctorUserId("");
+            }}
+            doctorUserId={doctorUserId}
+            onClearDoctor={() => {
+              setDoctorUserId("");
+              setUserSearch("");
+            }}
+            onSelectDoctor={(userId, label) => {
+              setDoctorUserId(userId);
+              setUserSearch(label);
+            }}
+            queryKeySuffix="create"
+            enabled={open}
+          />
           <div className="space-y-2">
             <Label>Год</Label>
             <Input
@@ -192,13 +270,6 @@ function EditProtocolHistoryForm({
   const [notes, setNotes] = useState(entry.notes ?? "");
   const [actionType, setActionType] = useState<ProtocolActionType>(entry.action_type);
 
-  const { data: userHints } = useQuery<{ data: { id: string; email: string; full_name: string }[] }>({
-    queryKey: ["portal-users-protocol-history-edit", userSearch],
-    queryFn: () =>
-      api.get(`/admin/portal-users?search=${encodeURIComponent(userSearch)}&limit=10`).then((r) => r.data),
-    enabled: userSearch.length >= 2 && !doctorUserId,
-  });
-
   const mutation = useMutation({
     mutationFn: ({ id, body }: { id: string; body: PatchProtocolHistoryRequest }) =>
       api.patch(`/admin/protocol-history/${id}`, body),
@@ -237,35 +308,25 @@ function EditProtocolHistoryForm({
   return (
     <>
       <div className="space-y-3">
-        <div className="space-y-2">
-          <Label>Врач (email / ФИО)</Label>
-          <Input
-            value={userSearch}
-            onChange={(e) => {
-              setUserSearch(e.target.value);
-              if (doctorUserId) setDoctorUserId("");
-            }}
-            placeholder="Начните вводить..."
-          />
-          {(userHints?.data?.length ?? 0) > 0 && !doctorUserId && (
-            <div className="border rounded-md max-h-32 overflow-auto">
-              {userHints!.data.map((u) => (
-                <button
-                  key={u.id}
-                  type="button"
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
-                  onClick={() => {
-                    setDoctorUserId(u.id);
-                    setUserSearch(`${u.full_name} (${u.email})`);
-                  }}
-                >
-                  {u.full_name} — {u.email}
-                </button>
-              ))}
-            </div>
-          )}
-          {doctorUserId && <p className="text-xs text-muted-foreground">ID: {doctorUserId}</p>}
-        </div>
+        <DoctorPickerField
+          id={`protocol-edit-doctor-${entry.id}`}
+          search={userSearch}
+          onSearchChange={(v) => {
+            setUserSearch(v);
+            if (doctorUserId) setDoctorUserId("");
+          }}
+          doctorUserId={doctorUserId}
+          onClearDoctor={() => {
+            setDoctorUserId("");
+            setUserSearch("");
+          }}
+          onSelectDoctor={(userId, label) => {
+            setDoctorUserId(userId);
+            setUserSearch(label);
+          }}
+          queryKeySuffix={`edit-${entry.id}`}
+          enabled
+        />
         <div className="space-y-2">
           <Label>Год</Label>
           <Input
