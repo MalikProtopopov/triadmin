@@ -24,6 +24,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { totalPages } from "@/lib/pagination";
 import { Suspense } from "react";
+import { ExportXlsxButton } from "@/components/shared/ExportXlsxButton";
+import type { ExportQueryValue } from "@/lib/exportDownload";
 
 const showManualConfirm =
   process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENABLE_MANUAL_CONFIRM === "true";
@@ -382,6 +384,19 @@ function PaymentsContent() {
             <X className="mr-1 h-3 w-3" /> Сбросить
           </Button>
         )}
+        <ExportXlsxButton
+          exportPath="/exports/payments"
+          label="Выгрузка XLSX"
+          buildParams={() => {
+            const p: Record<string, ExportQueryValue> = { date_field: "paid_at" };
+            if (productType !== "all") p.product_type = productType;
+            if (status !== "all") p.status = status;
+            if (dateRange?.from) p.date_from = format(dateRange.from, "yyyy-MM-dd");
+            if (dateRange?.to) p.date_to = format(dateRange.to, "yyyy-MM-dd");
+            if (filterUserId) p.user_id = filterUserId;
+            return p;
+          }}
+        />
       </div>
 
       <DataTable

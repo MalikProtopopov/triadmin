@@ -19,6 +19,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Plus, MoreHorizontal, Eye, Pencil, Trash2, X } from "lucide-react";
 import { totalPages } from "@/lib/pagination";
+import { ExportXlsxButton } from "@/components/shared/ExportXlsxButton";
+import type { ExportQueryValue } from "@/lib/exportDownload";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -154,6 +156,17 @@ export default function EventsPage() {
             <X className="mr-1 h-3 w-3" /> Сбросить
           </Button>
         )}
+        <ExportXlsxButton
+          exportPath="/exports/event-registrations"
+          label="Выгрузка XLSX"
+          buildParams={() => {
+            const p: Record<string, ExportQueryValue> = {};
+            if (statusFilter !== "all") p.status = statusFilter;
+            if (dateRange?.from) p.date_from = format(dateRange.from, "yyyy-MM-dd");
+            if (dateRange?.to) p.date_to = format(dateRange.to, "yyyy-MM-dd");
+            return p;
+          }}
+        />
       </div>
 
       <DataTable

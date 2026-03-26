@@ -26,6 +26,8 @@ import { toast } from "sonner";
 import { totalPages } from "@/lib/pagination";
 import { Plus, X } from "lucide-react";
 import { normalizeArrearsSummary } from "@/lib/arrearsSummary";
+import { ExportXlsxButton } from "@/components/shared/ExportXlsxButton";
+import type { ExportQueryValue } from "@/lib/exportDownload";
 
 export default function ArrearsPage() {
   const queryClient = useQueryClient();
@@ -362,6 +364,21 @@ export default function ArrearsPage() {
             <X className="mr-1 h-3 w-3" /> Сбросить
           </Button>
         )}
+        <ExportXlsxButton
+          exportPath="/exports/arrears"
+          label="Выгрузка XLSX"
+          buildParams={() => {
+            const p: Record<string, ExportQueryValue> = {};
+            if (statusFilter !== "all") p.status = statusFilter;
+            else if (!includeAllStatuses) p.include_inactive = "false";
+            if (year.trim()) {
+              const y = parseInt(year.trim(), 10);
+              if (Number.isFinite(y) && y >= 2000 && y <= 2100) p.year = y;
+            }
+            if (filterUserId) p.user_id = filterUserId;
+            return p;
+          }}
+        />
       </div>
 
       <DataTable

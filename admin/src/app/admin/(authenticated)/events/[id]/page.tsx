@@ -18,6 +18,8 @@ import { format } from "date-fns";
 import { ColumnDef } from "@tanstack/react-table";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { ExportXlsxButton } from "@/components/shared/ExportXlsxButton";
+import type { ExportQueryValue } from "@/lib/exportDownload";
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -134,7 +136,18 @@ export default function EventDetailPage() {
             </span>
           </div>
         </div>
-        <Button asChild><Link href={`/admin/events/${id}/edit`}><Pencil className="mr-2 h-4 w-4" /> Редактировать</Link></Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <ExportXlsxButton
+            exportPath="/exports/event-registrations"
+            label="Регистрации XLSX"
+            buildParams={() => {
+              const p: Record<string, ExportQueryValue> = { event_id: id };
+              if (regStatusFilter !== "all") p.status = regStatusFilter;
+              return p;
+            }}
+          />
+          <Button asChild><Link href={`/admin/events/${id}/edit`}><Pencil className="mr-2 h-4 w-4" /> Редактировать</Link></Button>
+        </div>
       </div>
 
       {/* Summary cards */}

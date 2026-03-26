@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import type { DateRange } from "react-day-picker";
+import { format } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import type { Plan, PlanType } from "@/types";
@@ -19,6 +21,9 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { DateRangePicker } from "@/components/shared/DateRangePicker";
+import { ExportXlsxButton } from "@/components/shared/ExportXlsxButton";
+import type { ExportQueryValue } from "@/lib/exportDownload";
 
 export default function PlansPage() {
   const queryClient = useQueryClient();
@@ -33,6 +38,7 @@ export default function PlansPage() {
   const [formSortOrder, setFormSortOrder] = useState<number | "">(0);
   const [formPlanType, setFormPlanType] = useState<PlanType>("subscription");
   const [deleteTarget, setDeleteTarget] = useState<Plan | null>(null);
+  const [subscriptionsExportRange, setSubscriptionsExportRange] = useState<DateRange | undefined>();
 
   const { data: plans, isLoading, error, refetch } = useQuery<Plan[]>({
     queryKey: ["plans"],
@@ -132,6 +138,25 @@ export default function PlansPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Тарифы подписки</h1>
         <Button onClick={openAdd}><Plus className="mr-2 h-4 w-4" /> Добавить тариф</Button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-muted/30 p-3">
+        <span className="text-sm text-muted-foreground">Выгрузка подписок и взносов (XLSX):</span>
+        <DateRangePicker
+          value={subscriptionsExportRange}
+          onChange={setSubscriptionsExportRange}
+          placeholder="Период (необязательно)"
+        />
+        <ExportXlsxButton
+          exportPath="/exports/subscriptions"
+          label="Скачать XLSX"
+          buildParams={() => {
+            const p: Record<string, ExportQueryValue> = {};
+            if (subscriptionsExportRange?.from) p.date_from = format(subscriptionsExportRange.from, "yyyy-MM-dd");
+            if (subscriptionsExportRange?.to) p.date_to = format(subscriptionsExportRange.to, "yyyy-MM-dd");
+            return p;
+          }}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

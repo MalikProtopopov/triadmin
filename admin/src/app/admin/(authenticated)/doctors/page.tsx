@@ -22,6 +22,7 @@ import { CreateDoctorModal } from "@/components/features/doctors/CreateDoctorMod
 import { useDebounce } from "@/hooks/useDebounce";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useRole } from "@/hooks/useRole";
+import { ExportXlsxButton } from "@/components/shared/ExportXlsxButton";
 import { format } from "date-fns";
 import { totalPages } from "@/lib/pagination";
 import { Suspense } from "react";
@@ -137,7 +138,7 @@ function getColumns(sorting: SortingState, onSort: (id: string) => void): Column
 function DoctorsListContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { isAdmin } = useRole();
+  const { isAdmin, isAccountant } = useRole();
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [status, setStatus] = useState(searchParams.get("status") || "all");
@@ -323,6 +324,9 @@ function DoctorsListContent() {
           <Button variant="ghost" size="sm" onClick={resetFilters}>
             <X className="mr-1 h-3 w-3" /> Сбросить
           </Button>
+        )}
+        {!isAccountant && (
+          <ExportXlsxButton exportPath="/exports/doctors" label="Реестр врачей XLSX" buildParams={() => ({})} />
         )}
       </div>
 

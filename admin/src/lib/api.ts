@@ -99,6 +99,9 @@ api.interceptors.response.use(
     }
 
     const skipErrorToast = (originalRequest as { skipErrorToast?: boolean }).skipErrorToast;
+    if (skipErrorToast) {
+      return Promise.reject(error);
+    }
 
     if (status === 403 && errorCode === "ACCOUNT_DEACTIVATED") {
       toast.error("Аккаунт деактивирован. Обратитесь к администратору.");
