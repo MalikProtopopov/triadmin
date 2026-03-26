@@ -20,7 +20,6 @@ import { Switch } from "@/components/ui/switch";
 import { Check, X, Power, PowerOff, Mail, Bell, FileWarning, ImageIcon, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { buildMediaUrl } from "@/lib/media";
-import { ContentBlocksEditor } from "@/components/shared/ContentBlocksEditor";
 import { DoctorModals } from "./DoctorModals";
 import { CertificatesSection } from "./CertificatesSection";
 import { PortalUserEventRegistrationsSection } from "@/components/features/events/PortalUserEventRegistrationsSection";
@@ -255,7 +254,6 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
               <TabsTrigger value="personal">Личная</TabsTrigger>
               <TabsTrigger value="documents">Документы</TabsTrigger>
               <TabsTrigger value="public">Публичный</TabsTrigger>
-              <TabsTrigger value="content">Контентные блоки</TabsTrigger>
               <TabsTrigger value="payments">Платежи</TabsTrigger>
               {finance && <TabsTrigger value="arrears">Задолженности</TabsTrigger>}
               <TabsTrigger value="events">Мероприятия</TabsTrigger>
@@ -396,10 +394,6 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
                   </Card>
                 )}
               </div>
-            </TabsContent>
-
-            <TabsContent value="content">
-              <ContentBlocksEditor entityType="doctor_profile" entityId={doctor.id} initialBlocks={doctor.content_blocks} />
             </TabsContent>
 
             <TabsContent value="payments">
