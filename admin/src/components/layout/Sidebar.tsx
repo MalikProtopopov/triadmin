@@ -32,6 +32,7 @@ import { useSidebarSections } from "@/hooks/useSidebarSections";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { AdminLogoMark } from "@/components/layout/AdminLogoMark";
 
 const iconCls = "h-4 w-4 shrink-0";
 
@@ -172,8 +173,10 @@ export function Sidebar({ mobile }: { mobile?: boolean } = {}) {
       )}
     >
       <div className="shrink-0 p-4 border-b">
-        <h1 className="font-semibold text-sm">Ассоциация трихологов</h1>
-        {user && <p className="text-xs text-muted-foreground mt-0.5 truncate">{user.email}</p>}
+        <Link href="/admin/dashboard" className="block outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md">
+          <AdminLogoMark height={36} />
+        </Link>
+        {user && <p className="text-xs text-muted-foreground mt-2 truncate">{user.email}</p>}
       </div>
 
       <ScrollArea className="flex-1 min-h-0 overflow-auto">

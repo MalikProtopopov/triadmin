@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { AdminLogoMark } from "@/components/layout/AdminLogoMark";
 
 export function Header() {
   return (
@@ -18,7 +19,10 @@ export function Header() {
           <Sidebar mobile />
         </SheetContent>
       </Sheet>
-      <span className="ml-3 font-semibold text-sm">Ассоциация трихологов</span>
+      <div className="ml-3 flex min-w-0 flex-1 items-center gap-2">
+        <AdminLogoMark height={28} className="shrink-0" />
+        <span className="truncate font-semibold text-sm">Ассоциация трихологов</span>
+      </div>
     </header>
   );
 }

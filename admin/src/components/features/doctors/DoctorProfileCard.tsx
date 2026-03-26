@@ -344,7 +344,7 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
                     )}
                     <dl className="space-y-2 text-sm">
                       {[
-                        ["Bio", doctor.bio],
+                        ["Биография", doctor.bio],
                         ["Email (публ.)", doctor.public_email],
                         ["Телефон (публ.)", doctor.public_phone],
                         ["Город", doctor.city?.name],

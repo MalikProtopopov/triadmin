@@ -14,6 +14,7 @@ import { hasAdminAccess } from "@/lib/auth";
 import { getDefaultAdminUrl, getSidebarSectionsForRole } from "@/lib/sidebarSections";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { AdminLogoMark } from "@/components/layout/AdminLogoMark";
 
 const schema = z.object({
   email: z.string().email("Введите корректный email"),
@@ -59,7 +60,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
+        <CardHeader className="text-center space-y-3">
+          <div className="flex justify-center">
+            <AdminLogoMark height={48} />
+          </div>
           <CardTitle className="text-xl">Вход в панель управления</CardTitle>
           <p className="text-sm text-muted-foreground">Ассоциация трихологов</p>
         </CardHeader>
