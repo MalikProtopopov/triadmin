@@ -24,6 +24,7 @@ import { DoctorModals } from "./DoctorModals";
 import { CertificatesSection } from "./CertificatesSection";
 import { PortalUserEventRegistrationsSection } from "@/components/features/events/PortalUserEventRegistrationsSection";
 import { format } from "date-fns";
+import { moderationActionBadgeStatus, moderationActionLabel } from "@/lib/moderationActionLabels";
 
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   medical_diploma: "Медицинский диплом",
@@ -554,7 +555,12 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
                           <TableRow key={h.id}>
                             <TableCell>{format(new Date(h.created_at), "dd.MM.yyyy HH:mm")}</TableCell>
                             <TableCell>{h.admin_email || "—"}</TableCell>
-                            <TableCell><StatusBadge status={h.action} /></TableCell>
+                            <TableCell>
+                              <StatusBadge
+                                status={moderationActionBadgeStatus(h.action)}
+                                label={moderationActionLabel(h.action)}
+                              />
+                            </TableCell>
                             <TableCell>{h.comment || "—"}</TableCell>
                           </TableRow>
                         ))}
