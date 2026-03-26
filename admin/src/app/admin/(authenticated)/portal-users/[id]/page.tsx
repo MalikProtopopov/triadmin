@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ExternalLink } from "lucide-react";
+import { PortalUserEventRegistrationsSection } from "@/components/features/events/PortalUserEventRegistrationsSection";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
@@ -138,6 +139,15 @@ export default function PortalUserDetailPage() {
           </Card>
         )}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Регистрации на мероприятия</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PortalUserEventRegistrationsSection userId={id} />
+        </CardContent>
+      </Card>
 
       {/* Payments */}
       {user.payments && user.payments.length > 0 && (

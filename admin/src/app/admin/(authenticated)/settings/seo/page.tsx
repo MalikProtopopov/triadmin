@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Pencil, Plus, Trash2, Loader2 } from "lucide-react";
 import { totalPages } from "@/lib/pagination";
 import { toast } from "sonner";
+import { slugify, sanitizeSlugInput } from "@/lib/slugify";
 
 interface SeoFormData {
   slug: string;
@@ -44,6 +45,7 @@ export default function SeoSettingsPage() {
   const [form, setForm] = useState<SeoFormData>(EMPTY_FORM);
   const initialFormRef = useRef<SeoFormData>(EMPTY_FORM);
   const [deleteTarget, setDeleteTarget] = useState<PageSeo | null>(null);
+  const [seoSlugManual, setSeoSlugManual] = useState(false);
   const [page, setPage] = useState(1);
   const perPage = 50;
 
@@ -100,7 +102,10 @@ export default function SeoSettingsPage() {
     if (!open && isModalDirty()) {
       if (!window.confirm("У вас есть несохранённые изменения. Закрыть без сохранения?")) return;
     }
-    if (!open) setForm(EMPTY_FORM);
+    if (!open) {
+      setForm(EMPTY_FORM);
+      setSeoSlugManual(false);
+    }
     setModalOpen(open);
   }
 
@@ -108,6 +113,7 @@ export default function SeoSettingsPage() {
     setEditingSlug(null);
     setForm(EMPTY_FORM);
     initialFormRef.current = EMPTY_FORM;
+    setSeoSlugManual(false);
     setModalOpen(true);
   }
 
@@ -132,6 +138,25 @@ export default function SeoSettingsPage() {
 
   function updateField(field: keyof SeoFormData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function updateSeoTitle(value: string) {
+    setForm((prev) => ({
+      ...prev,
+      title: value,
+      ...(!editingSlug && !seoSlugManual ? { slug: slugify(value) } : {}),
+    }));
+  }
+
+  function updateSeoSlug(value: string) {
+    const v = sanitizeSlugInput(value);
+    if (v) {
+      setSeoSlugManual(true);
+      setForm((prev) => ({ ...prev, slug: v }));
+    } else {
+      setSeoSlugManual(false);
+      setForm((prev) => ({ ...prev, slug: slugify(prev.title) }));
+    }
   }
 
   if (isLoading) return <TableSkeleton rows={5} cols={4} />;
@@ -196,16 +221,27 @@ export default function SeoSettingsPage() {
             <DialogTitle>{editingSlug ? `SEO — ${editingSlug}` : "Новая SEO страница"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input
+                value={form.title}
+                onChange={(e) => updateSeoTitle(e.target.value)}
+                placeholder="Заголовок страницы"
+              />
+            </div>
             {!editingSlug && (
               <div className="space-y-2">
                 <Label>Slug *</Label>
-                <Input value={form.slug} onChange={(e) => updateField("slug", e.target.value)} placeholder="home, about, contacts..." />
+                <Input
+                  value={form.slug}
+                  onChange={(e) => updateSeoSlug(e.target.value)}
+                  placeholder="Генерируется из Title"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Латиница и дефис; для русского заголовка — транслит. Можно править вручную; очистите поле — снова из Title.
+                </p>
               </div>
             )}
-            <div className="space-y-2">
-              <Label>Title</Label>
-              <Input value={form.title} onChange={(e) => updateField("title", e.target.value)} />
-            </div>
             <div className="space-y-2">
               <Label>Description</Label>
               <Textarea value={form.description} onChange={(e) => updateField("description", e.target.value)} rows={2} />

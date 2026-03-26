@@ -17,6 +17,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { toast } from "sonner";
+import { slugify, sanitizeSlugInput } from "@/lib/slugify";
 
 export default function CitiesPage() {
   const queryClient = useQueryClient();
@@ -27,6 +28,8 @@ export default function CitiesPage() {
   const [deleteTarget, setDeleteTarget] = useState<City | null>(null);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  /** Пока false — slug пересчитывается из названия; правка slug вручную включает режим «только вручную». */
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 
   const { data: cities, isLoading, error, refetch } = useQuery<City[]>({
     queryKey: ["admin-cities"],
@@ -77,6 +80,7 @@ export default function CitiesPage() {
     setEditing(null);
     setName("");
     setSlug("");
+    setSlugManuallyEdited(false);
     setDialogOpen(true);
   }
 
@@ -84,6 +88,7 @@ export default function CitiesPage() {
     setEditing(city);
     setName(city.name);
     setSlug(city.slug || "");
+    setSlugManuallyEdited(true);
     setDialogOpen(true);
   }
 
@@ -92,6 +97,7 @@ export default function CitiesPage() {
     setEditing(null);
     setName("");
     setSlug("");
+    setSlugManuallyEdited(false);
   }
 
   function startInlineEdit(city: City) {
@@ -175,16 +181,32 @@ export default function CitiesPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Название</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
+              <Input
+                value={name}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setName(v);
+                  if (!slugManuallyEdited) {
+                    setSlug(slugify(v));
+                  }
+                }}
+              />
             </div>
             <div className="space-y-2">
               <Label>Slug (URL)</Label>
               <Input
                 value={slug}
-                onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                placeholder="Оставьте пустым для автогенерации"
+                onChange={(e) => {
+                  const v = sanitizeSlugInput(e.target.value);
+                  setSlug(v);
+                  if (v) setSlugManuallyEdited(true);
+                  else setSlugManuallyEdited(false);
+                }}
+                placeholder="Генерируется из названия"
               />
-              <p className="text-xs text-muted-foreground">Допустимы: a-z, 0-9, дефис</p>
+              <p className="text-xs text-muted-foreground">
+                Допустимы: a-z, 0-9, дефис. Очистите поле — снова будет подставляться транслит из названия.
+              </p>
             </div>
           </div>
           <DialogFooter>

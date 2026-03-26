@@ -235,6 +235,33 @@ export interface RegistrationListResponse {
   offset: number;
 }
 
+/** Строка ответа GET /admin/portal-users/{user_id}/event-registrations (как в ЛК /profile/event-registrations). */
+export interface PortalUserEventRegistrationRow {
+  registration: {
+    id: string;
+    status: string;
+    created_at?: string;
+  };
+  event: {
+    id: string;
+    title: string;
+    event_date: string;
+    event_end_date: string | null;
+  };
+  tariff: {
+    id: string;
+    name: string;
+    applied_price: number;
+    is_member_price: boolean;
+  };
+  payment: {
+    id?: string;
+    amount?: number;
+    status?: string;
+    status_label?: string | null;
+  } | null;
+}
+
 export interface EventDetail {
   id: string;
   title: string;

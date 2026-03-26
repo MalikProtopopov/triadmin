@@ -22,22 +22,7 @@ import { toast } from "sonner";
 import { useState, useRef, useCallback } from "react";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[а-яё]/g, (ch) => {
-      const map: Record<string, string> = {
-        а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "yo", ж: "zh",
-        з: "z", и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o",
-        п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f", х: "kh", ц: "ts",
-        ч: "ch", ш: "sh", щ: "shch", ъ: "", ы: "y", ь: "", э: "e", ю: "yu", я: "ya",
-      };
-      return map[ch] || ch;
-    })
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
+import { slugify, sanitizeSlugInput } from "@/lib/slugify";
 
 const schema = z.object({
   title: z.string().min(3, "Минимум 3 символа"),
@@ -101,7 +86,7 @@ export function ArticleForm({ article }: ArticleFormProps) {
   }, [slugManuallyEdited, setValue]);
 
   const handleSlugChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+    const val = sanitizeSlugInput(e.target.value);
     setValue("slug", val, { shouldDirty: true });
     if (val) setSlugManuallyEdited(true);
     else setSlugManuallyEdited(false);

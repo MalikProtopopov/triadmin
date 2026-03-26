@@ -17,6 +17,7 @@ import { ErrorState } from "@/components/shared/ErrorState";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { slugify, sanitizeSlugInput } from "@/lib/slugify";
 
 interface ThemeFormData {
   title: string;
@@ -27,22 +28,6 @@ interface ThemeFormData {
 
 const EMPTY_FORM: ThemeFormData = { title: "", slug: "", is_active: true, sort_order: "" };
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[а-яё]/g, (ch) => {
-      const map: Record<string, string> = {
-        а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "yo", ж: "zh",
-        з: "z", и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o",
-        п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f", х: "kh", ц: "ts",
-        ч: "ch", ш: "sh", щ: "shch", ъ: "", ы: "y", ь: "", э: "e", ю: "yu", я: "ya",
-      };
-      return map[ch] || ch;
-    })
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
-
 export default function ArticleThemesPage() {
   const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
@@ -50,6 +35,8 @@ export default function ArticleThemesPage() {
   const [form, setForm] = useState<ThemeFormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ArticleTheme | null>(null);
+  /** Для новой темы: пока false — slug из названия; после правки slug вручную — не перезаписывать. */
+  const [slugManual, setSlugManual] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery<{ data: ArticleTheme[] }>({
     queryKey: ["article-themes"],
@@ -70,6 +57,7 @@ export default function ArticleThemesPage() {
   function openNew() {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setSlugManual(false);
     setModalOpen(true);
   }
 
@@ -81,6 +69,7 @@ export default function ArticleThemesPage() {
       is_active: theme.is_active,
       sort_order: theme.sort_order,
     });
+    setSlugManual(true);
     setModalOpen(true);
   }
 
@@ -88,7 +77,8 @@ export default function ArticleThemesPage() {
     setForm((prev) => ({
       ...prev,
       title,
-      slug: editingId ? prev.slug : slugify(title),
+      slug:
+        editingId ? prev.slug : slugManual ? prev.slug : slugify(title),
     }));
   }
 
@@ -182,7 +172,16 @@ export default function ArticleThemesPage() {
       )}
 
       {/* Create / Edit modal */}
-      <Dialog open={modalOpen} onOpenChange={(open) => { if (!open) setForm(EMPTY_FORM); setModalOpen(open); }}>
+      <Dialog
+        open={modalOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setForm(EMPTY_FORM);
+            setSlugManual(false);
+          }
+          setModalOpen(open);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editingId ? "Редактировать тему" : "Новая тема"}</DialogTitle>
@@ -194,8 +193,23 @@ export default function ArticleThemesPage() {
             </div>
             <div className="space-y-2">
               <Label>Slug</Label>
-              <Input value={form.slug} onChange={(e) => setForm((p) => ({ ...p, slug: e.target.value }))} placeholder="auto-generated" />
-              <p className="text-xs text-muted-foreground">Оставьте пустым для автогенерации</p>
+              <Input
+                value={form.slug}
+                onChange={(e) => {
+                  const v = sanitizeSlugInput(e.target.value);
+                  if (v) {
+                    setSlugManual(true);
+                    setForm((p) => ({ ...p, slug: v }));
+                  } else {
+                    setSlugManual(false);
+                    setForm((p) => ({ ...p, slug: slugify(p.title) }));
+                  }
+                }}
+                placeholder="Генерируется из названия"
+              />
+              <p className="text-xs text-muted-foreground">
+                Для новой темы заполняется из названия. Очистите поле — снова будет подставляться транслит.
+              </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">

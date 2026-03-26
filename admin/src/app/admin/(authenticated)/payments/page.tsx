@@ -18,11 +18,8 @@ import { Button } from "@/components/ui/button";
 import { ReceiptDialog } from "@/components/features/payments/ReceiptDialog";
 import { RefundModal } from "@/components/features/payments/RefundModal";
 import { CancelPaymentModal } from "@/components/features/payments/CancelPaymentModal";
-import { ManualPaymentModal } from "@/components/features/payments/ManualPaymentModal";
 import { Input } from "@/components/ui/input";
-import { Receipt as ReceiptIcon, X, Plus, RotateCcw, ArrowUp, ArrowDown, Copy, XCircle, CheckCircle, CalendarDays } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { canManageFinance } from "@/lib/roles";
+import { Receipt as ReceiptIcon, X, RotateCcw, ArrowUp, ArrowDown, Copy, XCircle, CheckCircle, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { totalPages } from "@/lib/pagination";
@@ -33,8 +30,6 @@ const showManualConfirm =
 
 function PaymentsContent() {
   const queryClient = useQueryClient();
-  const user = useAuth((s) => s.user);
-  const [manualOpen, setManualOpen] = useState(false);
   const [productType, setProductType] = useState("all");
   const [status, setStatus] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -307,12 +302,6 @@ function PaymentsContent() {
       <Breadcrumbs items={[{ label: "Платежи" }]} />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-2xl font-bold">Платежи</h1>
-        {canManageFinance(user) && (
-          <Button type="button" onClick={() => setManualOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Ручной платёж
-          </Button>
-        )}
       </div>
 
       {data?.summary && (
@@ -424,7 +413,6 @@ function PaymentsContent() {
         onClose={() => setCancelPayment(null)}
       />
 
-      <ManualPaymentModal open={manualOpen} onOpenChange={setManualOpen} />
     </div>
   );
 }
