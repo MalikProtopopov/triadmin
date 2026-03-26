@@ -530,6 +530,7 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
             <TabsContent value="events">
               <Card>
                 <CardContent className="pt-6">
+                  {/* API: GET .../portal-users/{user_id}/event-registrations — нужен UUID аккаунта (users), не doctor.id профиля */}
                   <PortalUserEventRegistrationsSection userId={doctor.user_id} />
                 </CardContent>
               </Card>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
+import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
 import api from "@/lib/api";
@@ -29,6 +30,13 @@ function formatEventDates(ev: PortalUserEventRegistrationRow["event"]): string {
   return `${start} — ${end}`;
 }
 
+function registrationsErrorMessage(error: unknown): string {
+  if (axios.isAxiosError(error) && error.response?.status === 404) {
+    return "Пользователь портала не найден (404). В URL API должен быть UUID аккаунта (users), тот же что в GET /admin/portal-users/{id} — поле user_id в данных врача, а не id профиля из адреса /admin/doctors/.... Проверьте окружение и БД.";
+  }
+  return "Не удалось загрузить регистрации на мероприятия";
+}
+
 interface PortalUserEventRegistrationsSectionProps {
   userId: string;
 }
@@ -50,8 +58,11 @@ export function PortalUserEventRegistrationsSection({ userId }: PortalUserEventR
 
   const { data, isLoading, error, refetch } = useQuery<PaginatedResponse<PortalUserEventRegistrationRow>>({
     queryKey: ["portal-user-event-registrations", userId, params],
-    queryFn: () => api.get(`/admin/portal-users/${userId}/event-registrations?${params}`).then((r) => r.data),
-    enabled: !!userId,
+    queryFn: () =>
+      api
+        .get(`/admin/portal-users/${userId}/event-registrations?${params}`, { skipErrorToast: true })
+        .then((r) => r.data),
+    enabled: !!userId?.trim(),
   });
 
   const { data: eventsData } = useQuery<PaginatedResponse<EventListItem>>({
@@ -149,8 +160,16 @@ export function PortalUserEventRegistrationsSection({ userId }: PortalUserEventR
 
   const hasFilters = statusFilter !== "all" || !!eventId;
 
+  if (!userId?.trim()) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Не указан user_id портала в данных профиля — список регистраций недоступен.
+      </p>
+    );
+  }
+
   if (error) {
-    return <ErrorState message="Не удалось загрузить регистрации на мероприятия" onRetry={refetch} />;
+    return <ErrorState message={registrationsErrorMessage(error)} onRetry={refetch} />;
   }
 
   return (
