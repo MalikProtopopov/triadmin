@@ -23,7 +23,6 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
-  Upload,
   ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -98,16 +97,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   { label: "Голосование", href: "/admin/voting", icon: <Vote className={iconCls} />, section: "voting" },
   { label: "Уведомления", href: "/admin/notifications", icon: <Bell className={iconCls} />, section: "notifications" },
-  {
-    label: "Пользователи портала",
-    href: "/admin/portal-users",
-    icon: <Users className={iconCls} />,
-    section: "portal_users",
-    children: [
-      { label: "Пользователи", href: "/admin/portal-users", section: "portal_users", icon: <Users className={iconCls} /> },
-      { label: "Импорт пользователей", href: "/admin/portal-users/import", section: "doctors_import", icon: <Upload className={iconCls} /> },
-    ],
-  },
+  { label: "Пользователи портала", href: "/admin/portal-users", icon: <Users className={iconCls} />, section: "portal_users" },
   { label: "Администраторы", href: "/admin/users", icon: <UserCog className={iconCls} />, section: "administrators" },
 ];
 
