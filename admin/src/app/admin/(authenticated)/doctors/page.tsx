@@ -23,6 +23,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useRole } from "@/hooks/useRole";
 import { ExportXlsxButton } from "@/components/shared/ExportXlsxButton";
+import { ExportTelegramButton } from "@/components/shared/ExportTelegramButton";
 import { format } from "date-fns";
 import { totalPages } from "@/lib/pagination";
 import { Suspense } from "react";
@@ -138,7 +139,7 @@ function getColumns(sorting: SortingState, onSort: (id: string) => void): Column
 function DoctorsListContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { isAdmin, isAccountant } = useRole();
+  const { isAdmin } = useRole();
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [status, setStatus] = useState(searchParams.get("status") || "all");
@@ -325,9 +326,10 @@ function DoctorsListContent() {
             <X className="mr-1 h-3 w-3" /> Сбросить
           </Button>
         )}
-        {!isAccountant && (
+        <div className="flex flex-wrap items-center gap-2">
           <ExportXlsxButton exportPath="/exports/doctors" label="Реестр врачей XLSX" buildParams={() => ({})} />
-        )}
+          <ExportTelegramButton exportPath="/exports/doctors/telegram" label="В Telegram" buildParams={() => ({})} />
+        </div>
       </div>
 
       <DataTable

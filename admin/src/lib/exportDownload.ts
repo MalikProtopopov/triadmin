@@ -112,3 +112,31 @@ export async function downloadExport(
     throw e;
   }
 }
+
+function successMessageFromResponse(data: unknown): string {
+  if (!data || typeof data !== "object") return "Отчёт отправлен в Telegram";
+  const o = data as Record<string, unknown>;
+  if (typeof o.message === "string" && o.message.trim()) return o.message;
+  return "Отчёт отправлен в Telegram";
+}
+
+/**
+ * POST выгрузки отчёта в Telegram (те же query-параметры, что у GET XLSX, если поддерживает бэкенд).
+ */
+export async function postExportTelegram(
+  path: string,
+  params?: Record<string, ExportQueryValue>
+): Promise<void> {
+  const sp = params ? buildExportSearchParams(params) : new URLSearchParams();
+  const qs = sp.toString();
+  const url = qs ? `${path}?${qs}` : path;
+  try {
+    const { data } = await api.post<unknown>(url, {}, { skipErrorToast: true });
+    toast.success(successMessageFromResponse(data));
+  } catch (e) {
+    const err = e as AxiosError<{ error?: { message?: string } }>;
+    const m = err.response?.data?.error?.message;
+    toast.error(typeof m === "string" ? m : "Не удалось отправить в Telegram");
+    throw e;
+  }
+}

@@ -41,7 +41,7 @@ export const ROLE_SIDEBAR_SECTIONS: Record<string, string[]> = {
     "settings_certificates",
     "portal_users",
   ],
-  accountant: ["arrears", "doctors", "payments"],
+  accountant: ["payments", "arrears", "doctors", "protocol_history"],
 };
 
 export function getSidebarSectionsForRole(role: string): string[] {
@@ -51,12 +51,12 @@ export function getSidebarSectionsForRole(role: string): string[] {
 /** Порядок секций для редиректа на первый доступный раздел */
 const DEFAULT_REDIRECT_ORDER: { section: string; href: string }[] = [
   { section: "dashboard", href: "/admin/dashboard" },
+  { section: "payments", href: "/admin/payments" },
   { section: "arrears", href: "/admin/arrears" },
   { section: "doctors", href: "/admin/doctors" },
   { section: "protocol_history", href: "/admin/protocol-history" },
   { section: "doctors_import", href: "/admin/portal-users/import" },
   { section: "events", href: "/admin/events" },
-  { section: "payments", href: "/admin/payments" },
   { section: "content", href: "/admin/content" },
   { section: "content_articles", href: "/admin/content/articles" },
   { section: "content_themes", href: "/admin/content/article-themes" },

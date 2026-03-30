@@ -25,8 +25,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { totalPages } from "@/lib/pagination";
 import { Plus, X } from "lucide-react";
-import { useRole } from "@/hooks/useRole";
 import { ExportXlsxButton } from "@/components/shared/ExportXlsxButton";
+import { ExportTelegramButton } from "@/components/shared/ExportTelegramButton";
 import type { ExportQueryValue } from "@/lib/exportDownload";
 
 function staffLine(u: { full_name: string | null; email: string } | null): string {
@@ -37,7 +37,6 @@ function staffLine(u: { full_name: string | null; email: string } | null): strin
 
 export default function ProtocolHistoryPage() {
   const queryClient = useQueryClient();
-  const { isAccountant } = useRole();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [actionTypeFilter, setActionTypeFilter] = useState<string>("all");
@@ -302,18 +301,18 @@ export default function ProtocolHistoryPage() {
             <X className="mr-1 h-3 w-3" /> Сбросить
           </Button>
         )}
-        {!isAccountant && (
-          <div className="flex flex-wrap items-center gap-2 pb-0.5">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="export-active-doctors-only"
-                checked={exportActiveDoctorsOnly}
-                onCheckedChange={(c) => setExportActiveDoctorsOnly(c === true)}
-              />
-              <Label htmlFor="export-active-doctors-only" className="text-sm font-normal cursor-pointer">
-                Только активные врачи (экспорт)
-              </Label>
-            </div>
+        <div className="flex flex-wrap items-center gap-2 pb-0.5">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="export-active-doctors-only"
+              checked={exportActiveDoctorsOnly}
+              onCheckedChange={(c) => setExportActiveDoctorsOnly(c === true)}
+            />
+            <Label htmlFor="export-active-doctors-only" className="text-sm font-normal cursor-pointer">
+              Только активные врачи (экспорт)
+            </Label>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <ExportXlsxButton
               exportPath="/exports/protocol-history"
               label="История протокола XLSX"
@@ -324,8 +323,18 @@ export default function ProtocolHistoryPage() {
                 return p;
               }}
             />
+            <ExportTelegramButton
+              exportPath="/exports/protocol-history/telegram"
+              label="В Telegram"
+              buildParams={() => {
+                const p: Record<string, ExportQueryValue> = {};
+                if (exportActiveDoctorsOnly) p.active_doctors_only = true;
+                if (filterDoctorUserId) p.doctor_user_id = filterDoctorUserId;
+                return p;
+              }}
+            />
           </div>
-        )}
+        </div>
       </div>
 
       <DataTable

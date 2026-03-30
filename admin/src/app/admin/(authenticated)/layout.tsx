@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
+import { isPathAllowedForAccountant } from "@/lib/accountantRoutes";
 
 export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const user = useAuth((s) => s.user);
@@ -18,14 +19,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       router.replace("/admin/login");
       return;
     }
-    if (
-      !isLoading &&
-      user &&
-      hasRole(user, "accountant") &&
-      !pathname.startsWith("/admin/payments") &&
-      !pathname.startsWith("/admin/arrears") &&
-      !pathname.startsWith("/admin/doctors")
-    ) {
+    if (!isLoading && user && hasRole(user, "accountant") && !isPathAllowedForAccountant(pathname)) {
       router.replace("/admin/payments");
     }
   }, [user, isLoading, router, pathname]);
