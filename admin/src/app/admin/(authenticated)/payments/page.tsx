@@ -16,10 +16,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ReceiptDialog } from "@/components/features/payments/ReceiptDialog";
-import { RefundModal } from "@/components/features/payments/RefundModal";
 import { CancelPaymentModal } from "@/components/features/payments/CancelPaymentModal";
 import { Input } from "@/components/ui/input";
-import { Receipt as ReceiptIcon, X, RotateCcw, ArrowUp, ArrowDown, Copy, XCircle, CheckCircle, CalendarDays } from "lucide-react";
+import { Receipt as ReceiptIcon, X, ArrowUp, ArrowDown, Copy, XCircle, CheckCircle, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { totalPages } from "@/lib/pagination";
@@ -41,8 +40,6 @@ function PaymentsContent() {
 
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [receiptData, setReceiptData] = useState<Receipt[] | null>(null);
-  const [refundOpen, setRefundOpen] = useState(false);
-  const [refundPayment, setRefundPayment] = useState<PaymentItem | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelPayment, setCancelPayment] = useState<PaymentItem | null>(null);
   const [confirmLoading, setConfirmLoading] = useState<string | null>(null);
@@ -276,16 +273,6 @@ function PaymentsContent() {
                     <ReceiptIcon className="h-4 w-4" />
                   </Button>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setRefundPayment(p);
-                    setRefundOpen(true);
-                  }}
-                >
-                  <RotateCcw className="mr-1 h-3 w-3" /> Возврат
-                </Button>
               </div>
             );
           }
@@ -413,13 +400,6 @@ function PaymentsContent() {
       />
 
       <ReceiptDialog open={receiptOpen} onOpenChange={setReceiptOpen} receipts={receiptData} />
-
-      <RefundModal
-        open={refundOpen}
-        onOpenChange={setRefundOpen}
-        payment={refundPayment}
-        onClose={() => setRefundPayment(null)}
-      />
 
       <CancelPaymentModal
         open={cancelOpen}

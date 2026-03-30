@@ -7,7 +7,6 @@ import type { SiteSettings } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
@@ -39,7 +38,15 @@ export default function GeneralSettingsPage() {
   useKeyboardShortcuts({ onSave: () => formRef.current?.requestSubmit() });
 
   const mutation = useMutation({
-    mutationFn: (payload: SiteSettings) => api.patch("/admin/settings", { data: payload }),
+    mutationFn: (payload: SiteSettings) => {
+      const prev = queryClient.getQueryData<SiteSettings>(["settings"]);
+      const merged: SiteSettings = {
+        ...payload,
+        home_hero: payload.home_hero ?? prev?.home_hero,
+        home_mission: payload.home_mission ?? prev?.home_mission,
+      };
+      return api.patch("/admin/settings", { data: merged });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["settings"] });
       toast.success("Настройки сохранены");
@@ -90,34 +97,6 @@ export default function GeneralSettingsPage() {
           <div className="space-y-2">
             <Label>Адрес</Label>
             <Input {...register("contacts_for_visitors.address")} placeholder="Адрес" />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle className="text-base">Hero-блок главной страницы</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Заголовок</Label>
-            <Input {...register("home_hero.title")} />
-          </div>
-          <div className="space-y-2">
-            <Label>Текст</Label>
-            <Textarea {...register("home_hero.text")} rows={3} />
-          </div>
-          <div className="space-y-2">
-            <Label>URL изображения</Label>
-            <Input {...register("home_hero.image_url")} placeholder="https://..." />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle className="text-base">Блок «Миссия»</CardTitle></CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label>Текст</Label>
-            <Textarea {...register("home_mission.text")} rows={3} />
           </div>
         </CardContent>
       </Card>
