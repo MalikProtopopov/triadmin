@@ -23,7 +23,6 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useRole } from "@/hooks/useRole";
 import { ExportXlsxButton } from "@/components/shared/ExportXlsxButton";
-import { ExportTelegramButton } from "@/components/shared/ExportTelegramButton";
 import { format } from "date-fns";
 import { totalPages } from "@/lib/pagination";
 import { Suspense } from "react";
@@ -326,10 +325,7 @@ function DoctorsListContent() {
             <X className="mr-1 h-3 w-3" /> Сбросить
           </Button>
         )}
-        <div className="flex flex-wrap items-center gap-2">
-          <ExportXlsxButton exportPath="/exports/doctors" label="Реестр врачей XLSX" buildParams={() => ({})} />
-          <ExportTelegramButton exportPath="/exports/doctors/telegram" label="В Telegram" buildParams={() => ({})} />
-        </div>
+        <ExportXlsxButton exportPath="/exports/doctors" label="Реестр врачей XLSX" buildParams={() => ({})} />
       </div>
 
       <DataTable
