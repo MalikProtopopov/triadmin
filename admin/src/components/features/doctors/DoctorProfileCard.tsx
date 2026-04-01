@@ -163,7 +163,7 @@ export function DoctorProfileCard({ doctor, onInvalidate }: DoctorProfileCardPro
                       onCheckedChange={(c) => paymentOverrides.mutate(c)}
                     />
                     <Label htmlFor="entry-fee-exempt" className="text-sm font-normal cursor-pointer">
-                      Не требовать вступительный взнос (entry_fee_exempt)
+                      Не требовать вступительный взнос
                     </Label>
                   </div>
                 )}
