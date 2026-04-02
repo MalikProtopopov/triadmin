@@ -1,48 +1,48 @@
 # === Test ===
 test-up:
-	docker compose -f docker-compose.test.yml --env-file .env.test up -d --build admin
+	docker compose -p troh-admin-test -f docker-compose.test.yml --env-file .env.test up -d --build admin
 
 test-down:
-	docker compose -f docker-compose.test.yml --env-file .env.test down
+	docker compose -p troh-admin-test -f docker-compose.test.yml --env-file .env.test down
 
 test-logs:
-	docker compose -f docker-compose.test.yml --env-file .env.test logs -f admin
+	docker compose -p troh-admin-test -f docker-compose.test.yml --env-file .env.test logs -f admin
 
 test-restart:
-	docker compose -f docker-compose.test.yml --env-file .env.test up -d --build --force-recreate admin
+	docker compose -p troh-admin-test -f docker-compose.test.yml --env-file .env.test up -d --build --force-recreate admin
 
 test-deploy:
 	git pull
-	docker compose -f docker-compose.test.yml --env-file .env.test build admin
-	docker compose -f docker-compose.test.yml --env-file .env.test up -d admin
+	docker compose -p troh-admin-test -f docker-compose.test.yml --env-file .env.test build admin
+	docker compose -p troh-admin-test -f docker-compose.test.yml --env-file .env.test up -d admin
 
 test-rebuild:
 	git pull
-	docker compose -f docker-compose.test.yml --env-file .env.test build --no-cache admin
-	docker compose -f docker-compose.test.yml --env-file .env.test up -d admin
+	docker compose -p troh-admin-test -f docker-compose.test.yml --env-file .env.test build --no-cache admin
+	docker compose -p troh-admin-test -f docker-compose.test.yml --env-file .env.test up -d admin
 
 # === Prod ===
 prod-up:
-	docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build admin
+	docker compose -p troh-admin-prod -f docker-compose.prod.yml --env-file .env.prod up -d --build admin
 
 prod-down:
-	docker compose -f docker-compose.prod.yml --env-file .env.prod down
+	docker compose -p troh-admin-prod -f docker-compose.prod.yml --env-file .env.prod down
 
 prod-logs:
-	docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f admin
+	docker compose -p troh-admin-prod -f docker-compose.prod.yml --env-file .env.prod logs -f admin
 
 prod-restart:
-	docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build --force-recreate admin
+	docker compose -p troh-admin-prod -f docker-compose.prod.yml --env-file .env.prod up -d --build --force-recreate admin
 
 prod-deploy:
 	git pull
-	docker compose -f docker-compose.prod.yml --env-file .env.prod build admin
-	docker compose -f docker-compose.prod.yml --env-file .env.prod up -d admin
+	docker compose -p troh-admin-prod -f docker-compose.prod.yml --env-file .env.prod build admin
+	docker compose -p troh-admin-prod -f docker-compose.prod.yml --env-file .env.prod up -d admin
 
 prod-rebuild:
 	git pull
-	docker compose -f docker-compose.prod.yml --env-file .env.prod build --no-cache admin
-	docker compose -f docker-compose.prod.yml --env-file .env.prod up -d admin
+	docker compose -p troh-admin-prod -f docker-compose.prod.yml --env-file .env.prod build --no-cache admin
+	docker compose -p troh-admin-prod -f docker-compose.prod.yml --env-file .env.prod up -d admin
 
 # === Status ===
 ps:
