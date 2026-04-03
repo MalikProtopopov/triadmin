@@ -44,7 +44,7 @@ export default function FaqListPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/admin/content/faq/${id}`),
+    mutationFn: (id: string) => api.delete(`/admin/faq/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["faq"] });
       toast.success("FAQ удалён");
