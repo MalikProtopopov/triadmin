@@ -24,6 +24,7 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardList,
+  MessageCircleQuestion,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -81,6 +82,7 @@ const NAV_ITEMS: NavItem[] = [
       { label: "Документы", href: "/admin/content/documents", section: "content_documents", icon: <FileStack className={iconCls} /> },
     ],
   },
+  { label: "Вопросы и ответы", href: "/admin/faq", icon: <MessageCircleQuestion className={iconCls} />, section: "faq" },
   {
     label: "Настройки",
     href: "/admin/settings",

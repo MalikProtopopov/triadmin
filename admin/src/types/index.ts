@@ -806,6 +806,38 @@ export interface PaginatedResponse<T> {
   offset: number;
 }
 
+// ── FAQ ──
+
+export interface FaqAdminItem {
+  id: string;
+  question_title: string;
+  question_text: string;
+  answer_text: string | null;
+  author_name: string | null;
+  is_active: boolean;
+  original_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FaqCreateRequest {
+  question_title: string;
+  question_text: string;
+  answer_text?: string | null;
+  author_name?: string | null;
+  is_active?: boolean;
+  original_date?: string | null;
+}
+
+export interface FaqUpdateRequest {
+  question_title?: string;
+  question_text?: string;
+  answer_text?: string | null;
+  author_name?: string | null;
+  is_active?: boolean;
+  original_date?: string | null;
+}
+
 export interface ApiError {
   error: {
     code: string;
