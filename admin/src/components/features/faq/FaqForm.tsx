@@ -89,7 +89,7 @@ export function FaqForm({ faq }: FaqFormProps) {
       } else {
         toast.success("FAQ создан");
       }
-      router.push("/admin/faq");
+      router.push("/admin/content/faq");
     },
   });
 

@@ -80,9 +80,9 @@ const NAV_ITEMS: NavItem[] = [
       { label: "Статьи", href: "/admin/content/articles", section: "content_articles", icon: <FileText className={iconCls} /> },
       { label: "Темы статей", href: "/admin/content/article-themes", section: "content_themes", icon: <Tags className={iconCls} /> },
       { label: "Документы", href: "/admin/content/documents", section: "content_documents", icon: <FileStack className={iconCls} /> },
+      { label: "Вопросы и ответы", href: "/admin/content/faq", section: "content_faq", icon: <MessageCircleQuestion className={iconCls} /> },
     ],
   },
-  { label: "Вопросы и ответы", href: "/admin/faq", icon: <MessageCircleQuestion className={iconCls} />, section: "faq" },
   {
     label: "Настройки",
     href: "/admin/settings",

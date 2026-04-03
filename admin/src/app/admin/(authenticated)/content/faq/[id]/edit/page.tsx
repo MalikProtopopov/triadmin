@@ -23,7 +23,8 @@ export default function EditFaqPage() {
   return (
     <div className="space-y-6">
       <Breadcrumbs items={[
-        { label: "Вопросы и ответы", href: "/admin/faq" },
+        { label: "Контент" },
+        { label: "Вопросы и ответы", href: "/admin/content/faq" },
         { label: data.question_title },
       ]} />
       <h1 className="text-2xl font-bold">Редактирование вопроса</h1>

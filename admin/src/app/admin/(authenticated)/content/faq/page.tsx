@@ -44,7 +44,7 @@ export default function FaqListPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/admin/faq/${id}`),
+    mutationFn: (id: string) => api.delete(`/admin/content/faq/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["faq"] });
       toast.success("FAQ удалён");
@@ -57,7 +57,7 @@ export default function FaqListPage() {
       accessorKey: "question_title",
       header: "Заголовок",
       cell: ({ row }) => (
-        <Link href={`/admin/faq/${row.original.id}/edit`} className="font-medium hover:underline line-clamp-2">
+        <Link href={`/admin/content/faq/${row.original.id}/edit`} className="font-medium hover:underline line-clamp-2">
           {row.original.question_title}
         </Link>
       ),
@@ -98,7 +98,7 @@ export default function FaqListPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem asChild>
-              <Link href={`/admin/faq/${row.original.id}/edit`}><Pencil className="mr-2 h-4 w-4" /> Редактировать</Link>
+              <Link href={`/admin/content/faq/${row.original.id}/edit`}><Pencil className="mr-2 h-4 w-4" /> Редактировать</Link>
             </DropdownMenuItem>
             {isAdmin && (
               <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(row.original)}>
@@ -115,10 +115,10 @@ export default function FaqListPage() {
 
   return (
     <div className="space-y-4">
-      <Breadcrumbs items={[{ label: "Вопросы и ответы" }]} />
+      <Breadcrumbs items={[{ label: "Контент" }, { label: "Вопросы и ответы" }]} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Вопросы и ответы</h1>
-        <Button asChild><Link href="/admin/faq/new"><Plus className="mr-2 h-4 w-4" /> Создать</Link></Button>
+        <Button asChild><Link href="/admin/content/faq/new"><Plus className="mr-2 h-4 w-4" /> Создать</Link></Button>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
