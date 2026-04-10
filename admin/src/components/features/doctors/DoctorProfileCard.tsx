@@ -30,7 +30,7 @@ const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   medical_diploma: "Медицинский диплом",
   speciality_certificate: "Сертификат специалиста",
   retraining_cert: "Сертификат переподготовки",
-  oncology_cert: "Сертификат по онкологии",
+  oncology_cert: "Сертификат по трихологии",
   additional_cert: "Дополнительный сертификат",
   passport: "Паспорт",
   other: "Прочее",
