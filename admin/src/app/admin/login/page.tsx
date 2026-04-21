@@ -17,7 +17,10 @@ import { Loader2 } from "lucide-react";
 import { AdminLogoMark } from "@/components/layout/AdminLogoMark";
 
 const schema = z.object({
-  email: z.string().email("Введите корректный email"),
+  email: z
+    .string()
+    .email("Введите корректный email")
+    .transform((v) => v.trim().toLowerCase()),
   password: z.string().min(1, "Введите пароль"),
 });
 

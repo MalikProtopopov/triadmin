@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   ColumnDef,
   flexRender,
@@ -63,6 +64,12 @@ export function DataTable<TData, TValue>({
     onSortingChange,
     pageCount: totalPages,
   });
+
+  useEffect(() => {
+    if (!isLoading && onPageChange && total > 0 && totalPages > 0 && page > totalPages) {
+      onPageChange(1);
+    }
+  }, [page, total, totalPages, isLoading, onPageChange]);
 
   if (isLoading) {
     return (

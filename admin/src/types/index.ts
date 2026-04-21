@@ -152,6 +152,8 @@ export interface PaymentItem {
   created_at: string;
   event_registration_id?: string | null;
   event?: { id: string; title: string };
+  external_payment_id?: string | null;
+  moneta_operation_id?: string | null;
 }
 
 export interface PaymentsSummary {

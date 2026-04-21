@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ColumnDef } from "@tanstack/react-table";
@@ -25,6 +25,7 @@ import { totalPages } from "@/lib/pagination";
 import { Suspense } from "react";
 import { ExportXlsxButton } from "@/components/shared/ExportXlsxButton";
 import type { ExportQueryValue } from "@/lib/exportDownload";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const showManualConfirm =
   process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_ENABLE_MANUAL_CONFIRM === "true";
@@ -45,6 +46,14 @@ function PaymentsContent() {
   const [confirmLoading, setConfirmLoading] = useState<string | null>(null);
   const [filterUserId, setFilterUserId] = useState("");
   const [filterUserSearch, setFilterUserSearch] = useState("");
+  const [nameQuery, setNameQuery] = useState("");
+  const debouncedName = useDebounce(nameQuery.trim(), 400);
+  const [providerIdInput, setProviderIdInput] = useState("");
+  const [providerIdApplied, setProviderIdApplied] = useState("");
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedName, providerIdApplied]);
 
   const { data: userHints } = useQuery<{ data: { id: string; email: string; full_name: string }[] }>({
     queryKey: ["users-search-payments", filterUserSearch],
@@ -62,6 +71,8 @@ function PaymentsContent() {
   if (dateRange?.from) params.set("date_from", format(dateRange.from, "yyyy-MM-dd"));
   if (dateRange?.to) params.set("date_to", format(dateRange.to, "yyyy-MM-dd"));
   if (filterUserId) params.set("user_id", filterUserId);
+  if (debouncedName) params.set("name", debouncedName);
+  if (providerIdApplied) params.set("provider_id", providerIdApplied);
 
   const { data, isLoading, error, refetch } = useQuery<PaginatedResponse<PaymentItem> & { summary: PaymentsSummary }>({
     queryKey: ["payments", params.toString()],
@@ -117,9 +128,20 @@ function PaymentsContent() {
         cell: ({ row }) => {
           const u = row.original.user;
           if (!u) return "—";
+          const name = u.full_name?.trim() || u.email;
           return (
             <div>
-              <p className="font-medium text-sm">{u.full_name}</p>
+              {u.id ? (
+                <Link
+                  href={`/admin/portal-users/${u.id}`}
+                  className="font-medium text-sm hover:underline"
+                  title="Открыть профиль пользователя"
+                >
+                  {name}
+                </Link>
+              ) : (
+                <p className="font-medium text-sm">{name}</p>
+              )}
               <p className="text-xs text-muted-foreground">{u.email}</p>
             </div>
           );
@@ -171,7 +193,37 @@ function PaymentsContent() {
       {
         accessorKey: "payment_provider",
         header: "Провайдер",
-        cell: ({ row }) => row.original.payment_provider || "—",
+        cell: ({ row }) => {
+          const p = row.original;
+          const provider = p.payment_provider || "—";
+          const ids: { label: string; value: string }[] = [];
+          if (p.payment_provider === "moneta") {
+            if (p.external_payment_id) ids.push({ label: "external", value: p.external_payment_id });
+            if (p.moneta_operation_id && p.moneta_operation_id !== p.external_payment_id) {
+              ids.push({ label: "moneta", value: p.moneta_operation_id });
+            }
+          }
+          return (
+            <div className="flex flex-col gap-0.5">
+              <span>{provider}</span>
+              {ids.map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                  title={`Скопировать ${item.label}`}
+                  onClick={() => {
+                    navigator.clipboard.writeText(item.value);
+                    toast.success("ID скопирован");
+                  }}
+                >
+                  <span className="font-mono">#{item.value}</span>
+                  <Copy className="h-3 w-3" />
+                </button>
+              ))}
+            </div>
+          );
+        },
       },
       {
         accessorKey: "status",
@@ -282,7 +334,13 @@ function PaymentsContent() {
     ];
   }, [sortOrder, toggleSort, openReceipt, handleConfirm, confirmLoading]);
 
-  const hasFilters = productType !== "all" || status !== "all" || !!dateRange?.from || !!filterUserId;
+  const hasFilters =
+    productType !== "all" ||
+    status !== "all" ||
+    !!dateRange?.from ||
+    !!filterUserId ||
+    !!debouncedName ||
+    !!providerIdApplied;
 
   if (error) return <ErrorState message="Не удалось загрузить платежи" onRetry={refetch} />;
 
@@ -366,8 +424,45 @@ function PaymentsContent() {
             </div>
           )}
         </div>
+        <Input
+          className="w-56"
+          placeholder="ФИО / email"
+          value={nameQuery}
+          onChange={(e) => setNameQuery(e.target.value)}
+        />
+        <Input
+          className="w-56"
+          placeholder="ID в платёжной системе"
+          value={providerIdInput}
+          onChange={(e) => setProviderIdInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              setProviderIdApplied(providerIdInput.trim());
+            }
+          }}
+          onBlur={() => {
+            if (providerIdInput.trim() !== providerIdApplied) {
+              setProviderIdApplied(providerIdInput.trim());
+            }
+          }}
+        />
         {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={() => { setProductType("all"); setStatus("all"); setDateRange(undefined); setFilterUserId(""); setFilterUserSearch(""); setPage(1); }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setProductType("all");
+              setStatus("all");
+              setDateRange(undefined);
+              setFilterUserId("");
+              setFilterUserSearch("");
+              setNameQuery("");
+              setProviderIdInput("");
+              setProviderIdApplied("");
+              setPage(1);
+            }}
+          >
             <X className="mr-1 h-3 w-3" /> Сбросить
           </Button>
         )}
@@ -381,6 +476,8 @@ function PaymentsContent() {
             if (dateRange?.from) p.date_from = format(dateRange.from, "yyyy-MM-dd");
             if (dateRange?.to) p.date_to = format(dateRange.to, "yyyy-MM-dd");
             if (filterUserId) p.user_id = filterUserId;
+            if (debouncedName) p.name = debouncedName;
+            if (providerIdApplied) p.provider_id = providerIdApplied;
             return p;
           }}
         />

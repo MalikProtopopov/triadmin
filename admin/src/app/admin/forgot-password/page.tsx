@@ -13,7 +13,10 @@ import { forgotPassword } from "@/lib/auth";
 import { Loader2 } from "lucide-react";
 
 const schema = z.object({
-  email: z.string().email("Введите корректный email"),
+  email: z
+    .string()
+    .email("Введите корректный email")
+    .transform((v) => v.trim().toLowerCase()),
 });
 
 export default function ForgotPasswordPage() {
