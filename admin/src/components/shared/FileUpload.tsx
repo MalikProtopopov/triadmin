@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useDropzone } from "react-dropzone";
 import { UploadCloud, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,11 @@ interface FileUploadProps {
   onChange: (files: File | File[] | null) => void;
   label?: string;
   hint?: string;
+  existingImageUrl?: string | null;
+}
+
+function isImageFile(file: File) {
+  return file.type.startsWith("image/");
 }
 
 export function FileUpload({
@@ -23,6 +28,7 @@ export function FileUpload({
   onChange,
   label = "Перетащите файл или нажмите для выбора",
   hint,
+  existingImageUrl,
 }: FileUploadProps) {
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -42,7 +48,26 @@ export function FileUpload({
     multiple,
   });
 
-  const files = value ? (Array.isArray(value) ? value : [value]) : [];
+  const files = useMemo(
+    () => (value ? (Array.isArray(value) ? value : [value]) : []),
+    [value]
+  );
+
+  const previews = useMemo(
+    () =>
+      files.map((file) => (isImageFile(file) ? URL.createObjectURL(file) : null)),
+    [files]
+  );
+
+  useEffect(() => {
+    return () => {
+      previews.forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, [previews]);
+
+  const showExistingPreview = !!existingImageUrl && files.length === 0;
 
   return (
     <div>
@@ -57,30 +82,62 @@ export function FileUpload({
         <p className="text-sm text-muted-foreground">{label}</p>
         {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
       </div>
+
+      {showExistingPreview && (
+        <div className="mt-3">
+          <p className="text-xs text-muted-foreground mb-2">Текущее изображение:</p>
+          <div className="inline-block rounded-lg border bg-muted/30 p-2">
+            <img
+              src={existingImageUrl as string}
+              alt="Текущее изображение"
+              className="max-h-40 max-w-full rounded object-contain"
+            />
+          </div>
+        </div>
+      )}
+
       {files.length > 0 && (
-        <div className="mt-2 space-y-1">
-          {files.map((file, i) => (
-            <div key={i} className="flex items-center gap-2 text-sm">
-              <span className="truncate flex-1">{file.name}</span>
-              <span className="text-muted-foreground">{(file.size / 1024 / 1024).toFixed(1)} МБ</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (multiple) {
-                    const newFiles = files.filter((_, idx) => idx !== i);
-                    onChange(newFiles.length ? newFiles : null);
-                  } else {
-                    onChange(null);
-                  }
-                }}
+        <div className="mt-3 space-y-2">
+          {files.map((file, i) => {
+            const previewUrl = previews[i];
+            return (
+              <div
+                key={i}
+                className="flex items-center gap-3 rounded-lg border p-2"
               >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          ))}
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt={file.name}
+                    className="h-16 w-16 shrink-0 rounded object-cover bg-muted"
+                  />
+                ) : null}
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-sm">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(file.size / 1024 / 1024).toFixed(1)} МБ
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (multiple) {
+                      const newFiles = files.filter((_, idx) => idx !== i);
+                      onChange(newFiles.length ? newFiles : null);
+                    } else {
+                      onChange(null);
+                    }
+                  }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

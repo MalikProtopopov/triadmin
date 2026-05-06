@@ -164,10 +164,8 @@ export function EventForm({ event }: EventFormProps) {
               value={coverImage}
               onChange={(f) => setCoverImage(f as File | null)}
               hint="JPG, PNG, WebP, до 5 МБ"
+              existingImageUrl={event?.cover_image_url}
             />
-            {event?.cover_image_url && !coverImage && (
-              <p className="text-xs text-muted-foreground">Текущая обложка загружена. Выберите новый файл для замены.</p>
-            )}
           </div>
         </CardContent>
       </Card>
