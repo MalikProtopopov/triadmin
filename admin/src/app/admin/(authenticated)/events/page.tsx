@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, MoreHorizontal, Eye, Pencil, Trash2, X } from "lucide-react";
+import { Plus, MoreHorizontal, Eye, Pencil, Trash2, X, ImageIcon } from "lucide-react";
 import { totalPages } from "@/lib/pagination";
 import { ExportXlsxButton } from "@/components/shared/ExportXlsxButton";
 import type { ExportQueryValue } from "@/lib/exportDownload";
@@ -91,6 +91,24 @@ export default function EventsPage() {
   const hasFilters = statusFilter !== "all" || !!dateRange?.from;
 
   const columns = useMemo<ColumnDef<EventListItem>[]>(() => [
+    {
+      id: "cover",
+      header: "",
+      cell: ({ row }) => {
+        const url = row.original.cover_image_url;
+        return url ? (
+          <img
+            src={url}
+            alt=""
+            className="h-10 w-16 rounded object-cover border bg-muted"
+          />
+        ) : (
+          <div className="h-10 w-16 rounded border bg-muted/40 flex items-center justify-center text-muted-foreground">
+            <ImageIcon className="h-4 w-4" />
+          </div>
+        );
+      },
+    },
     {
       accessorKey: "title",
       header: "Название",
