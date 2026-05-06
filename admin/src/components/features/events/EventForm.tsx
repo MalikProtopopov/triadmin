@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { FileUpload } from "@/components/shared/FileUpload";
 import { ContentBlocksEditor } from "@/components/shared/ContentBlocksEditor";
 import { TariffSection } from "./TariffSection";
@@ -45,6 +46,7 @@ export function EventForm({ event }: EventFormProps) {
   const queryClient = useQueryClient();
   const isEditing = !!event;
   const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [isActive, setIsActive] = useState<boolean>(event?.is_active ?? true);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(isEditing);
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isDirty } } = useForm<FormData>({
@@ -87,6 +89,7 @@ export function EventForm({ event }: EventFormProps) {
       if (params.data.event_end_date) fd.append("event_end_date", new Date(params.data.event_end_date).toISOString());
       if (params.data.location) fd.append("location", params.data.location);
       if (coverImage) fd.append("cover_image", coverImage);
+      fd.append("is_active", String(isActive));
 
       const headers = { "Content-Type": undefined as unknown as string };
 
@@ -166,6 +169,11 @@ export function EventForm({ event }: EventFormProps) {
               hint="JPG, PNG, WebP, до 5 МБ"
               existingImageUrl={event?.cover_image_url}
             />
+          </div>
+          <div className="flex items-center gap-3 pt-2">
+            <Switch id="event-is-active" checked={isActive} onCheckedChange={setIsActive} />
+            <Label htmlFor="event-is-active">Активно</Label>
+            <p className="text-xs text-muted-foreground">Если выключено — мероприятие не отображается на сайте</p>
           </div>
         </CardContent>
       </Card>

@@ -185,6 +185,7 @@ export interface EventListItem {
   registrations_count: number;
   revenue: number;
   cover_image_url: string | null;
+  is_active: boolean;
 }
 
 export interface EventTariff {
@@ -274,6 +275,7 @@ export interface EventDetail {
   location: string | null;
   cover_image_url: string | null;
   status: EventStatus;
+  is_active: boolean;
   created_by: string;
   created_at: string;
   tariffs: EventTariff[];

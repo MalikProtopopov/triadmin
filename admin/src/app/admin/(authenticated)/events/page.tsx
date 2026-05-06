@@ -16,6 +16,7 @@ import { DateRangePicker } from "@/components/shared/DateRangePicker";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Plus, MoreHorizontal, Eye, Pencil, Trash2, X } from "lucide-react";
 import { totalPages } from "@/lib/pagination";
@@ -60,6 +61,17 @@ export default function EventsPage() {
     },
   });
 
+  const toggleActiveMutation = useMutation({
+    mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const fd = new FormData();
+      fd.append("is_active", String(is_active));
+      return api.patch(`/admin/events/${id}`, fd, {
+        headers: { "Content-Type": undefined as unknown as string },
+      });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["events"] }),
+  });
+
   function handleDeleteClick(item: EventListItem) {
     if ((item.registrations_count ?? 0) > 0) {
       toast.warning("Невозможно удалить: есть подтверждённые регистрации");
@@ -100,6 +112,17 @@ export default function EventsPage() {
       header: "Статус",
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
+    {
+      accessorKey: "is_active",
+      header: "Активно",
+      cell: ({ row }) => (
+        <Switch
+          checked={row.original.is_active}
+          onCheckedChange={(v) => toggleActiveMutation.mutate({ id: row.original.id, is_active: v })}
+          aria-label="Активно"
+        />
+      ),
+    },
     { accessorKey: "registrations_count", header: "Участников" },
     {
       accessorKey: "revenue",
@@ -123,7 +146,7 @@ export default function EventsPage() {
         </DropdownMenu>
       ),
     },
-  ], [sorting, handleSort]);
+  ], [sorting, handleSort, toggleActiveMutation]);
 
   if (error) return <ErrorState message="Не удалось загрузить мероприятия" onRetry={refetch} />;
 

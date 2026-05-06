@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { ErrorState } from "@/components/shared/ErrorState";
@@ -37,10 +38,14 @@ export default function ArticleThemesPage() {
   const [deleteTarget, setDeleteTarget] = useState<ArticleTheme | null>(null);
   /** Для новой темы: пока false — slug из названия; после правки slug вручную — не перезаписывать. */
   const [slugManual, setSlugManual] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<"all" | "active" | "inactive">("all");
 
   const { data, isLoading, error, refetch } = useQuery<{ data: ArticleTheme[] }>({
-    queryKey: ["article-themes"],
-    queryFn: () => api.get("/admin/article-themes").then((r) => r.data),
+    queryKey: ["article-themes", activeFilter],
+    queryFn: () => {
+      const qs = activeFilter === "all" ? "" : `?active=${activeFilter === "active"}`;
+      return api.get(`/admin/article-themes${qs}`).then((r) => r.data);
+    },
   });
 
   const themes = data?.data || [];
@@ -121,6 +126,17 @@ export default function ArticleThemesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Темы статей</h1>
         <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" /> Создать тему</Button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Select value={activeFilter} onValueChange={(v) => setActiveFilter(v as typeof activeFilter)}>
+          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Все темы</SelectItem>
+            <SelectItem value="active">Только активные</SelectItem>
+            <SelectItem value="inactive">Только неактивные</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {themes.length === 0 ? (
