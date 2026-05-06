@@ -79,11 +79,11 @@ export function EventForm({ event }: EventFormProps) {
   }, [setValue]);
 
   const mutation = useMutation({
-    mutationFn: async (params: { data: FormData; status: string }) => {
+    mutationFn: async (params: { data: FormData; status?: string }) => {
       const fd = new FormData();
       fd.append("title", params.data.title);
       fd.append("event_date", new Date(params.data.event_date).toISOString());
-      fd.append("status", params.status);
+      if (params.status) fd.append("status", params.status);
       if (params.data.slug) fd.append("slug", params.data.slug);
       if (params.data.description) fd.append("description", params.data.description);
       if (params.data.event_end_date) fd.append("event_end_date", new Date(params.data.event_end_date).toISOString());
@@ -118,12 +118,14 @@ export function EventForm({ event }: EventFormProps) {
     enabled: true,
   });
 
-  function submitWithStatus(status: string) {
+  function submitWithStatus(status?: string) {
     handleSubmit((d) => mutation.mutate({ data: d, status }))();
   }
 
+  const defaultSaveStatus = isEditing ? undefined : "upcoming";
+
   return (
-    <form ref={formRef} onSubmit={(e) => { e.preventDefault(); submitWithStatus("upcoming"); }} className="space-y-6">
+    <form ref={formRef} onSubmit={(e) => { e.preventDefault(); submitWithStatus(defaultSaveStatus); }} className="space-y-6">
       <Card>
         <CardHeader><CardTitle className="text-base">Основная информация</CardTitle></CardHeader>
         <CardContent className="space-y-4">
@@ -194,15 +196,31 @@ export function EventForm({ event }: EventFormProps) {
 
       <Separator />
 
-      <div className="flex gap-3">
-        <Button type="button" onClick={() => submitWithStatus("upcoming")} disabled={mutation.isPending}>
+      <div className="flex flex-wrap gap-3">
+        <Button type="button" onClick={() => submitWithStatus(defaultSaveStatus)} disabled={mutation.isPending}>
           {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Сохранить
         </Button>
-        <Button type="button" onClick={() => submitWithStatus("ongoing")} variant="outline" disabled={mutation.isPending}>
-          {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Отметить как «Идёт»
-        </Button>
+        {isEditing && event?.status !== "ongoing" && (
+          <Button type="button" onClick={() => submitWithStatus("ongoing")} variant="outline" disabled={mutation.isPending}>
+            Отметить как «Идёт»
+          </Button>
+        )}
+        {isEditing && event?.status !== "finished" && (
+          <Button type="button" onClick={() => submitWithStatus("finished")} variant="outline" disabled={mutation.isPending}>
+            Отметить как «Завершено»
+          </Button>
+        )}
+        {isEditing && event?.status !== "upcoming" && (
+          <Button type="button" onClick={() => submitWithStatus("upcoming")} variant="outline" disabled={mutation.isPending}>
+            Отметить как «Предстоящее»
+          </Button>
+        )}
+        {isEditing && event?.status !== "cancelled" && (
+          <Button type="button" onClick={() => submitWithStatus("cancelled")} variant="outline" disabled={mutation.isPending}>
+            Отменить мероприятие
+          </Button>
+        )}
         <Button
           type="button"
           variant="outline"
