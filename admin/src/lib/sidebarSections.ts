@@ -43,7 +43,7 @@ export const ROLE_SIDEBAR_SECTIONS: Record<string, string[]> = {
     "settings_certificates",
     "portal_users",
   ],
-  accountant: ["payments", "arrears", "doctors", "protocol_history"],
+  accountant: ["payments", "arrears", "doctors", "protocol_history", "portal_users"],
 };
 
 export function getSidebarSectionsForRole(role: string): string[] {

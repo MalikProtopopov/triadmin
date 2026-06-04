@@ -7,6 +7,7 @@ export const ACCOUNTANT_PATH_PREFIXES = [
   "/admin/arrears",
   "/admin/doctors",
   "/admin/protocol-history",
+  "/admin/portal-users",
 ] as const;
 
 export function isPathAllowedForAccountant(pathname: string): boolean {
